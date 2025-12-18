@@ -14,13 +14,10 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from Adarsh.utils.file_properties import get_name, get_hash, get_media_file_size
 db = Database(Var.DATABASE_URL, Var.name)
 
-# --- HARDCODED SETTINGS (நிரந்தர அமைப்புகள்) ---
-# 1. உங்கள் சேனல் ஐடி
+# --- FINAL SETTINGS (இதை மாற்ற வேண்டாம்) ---
 BIN_CHANNEL_ID = -1003649271176
-
-# 2. உங்கள் பாட் URL (கடைசியில் / இருப்பது மிக முக்கியம்)
 MY_URL = "https://trm-team-file-to-link.onrender.com/"
-# ------------------------------------------------
+# -------------------------------------------
 
 MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
@@ -70,10 +67,9 @@ async def private_receive_handler(c: Client, m: Message):
         )
     
     try:
-        # ஃபைலை சேனலுக்கு அனுப்புதல்
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
-        # இங்கே Var.URL-க்கு பதில் நமது MY_URL பயன்படுத்தப்படுகிறது
+        # Link Generation (நிலையான லிங்க் உருவாக்கம்)
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
@@ -101,7 +97,8 @@ async def private_receive_handler(c: Client, m: Message):
         )
     except Exception as e:
         print(f"Error: {e}")
-        await m.reply_text(f"⚠️ **ERROR:** \n\n`{e}`")
+        # எரர் வந்தால் காட்டுவதற்காக
+        await m.reply_text(f"⚠️ **ERROR:** `{e}`")
 
 @StreamBot.on_message(filters.channel & ~filters.group & (filters.document | filters.video | filters.photo) & ~filters.forwarded, group=-1)
 async def channel_receive_handler(bot, broadcast):
@@ -120,7 +117,6 @@ async def channel_receive_handler(bot, broadcast):
     try:
         log_msg = await broadcast.forward(chat_id=BIN_CHANNEL_ID)
         
-        # இங்கேயும் MY_URL பயன்படுத்துகிறோம்
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"       
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
