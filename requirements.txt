@@ -1,4 +1,4 @@
-pyrogram
+pyrogram==2.0.106
 tgcrypto
 aiohttp
 python-dotenv
@@ -8,4 +8,5 @@ dnspython
 apscheduler
 requests
 psutil
-pyromod
+pyromod==2.0.1
+
