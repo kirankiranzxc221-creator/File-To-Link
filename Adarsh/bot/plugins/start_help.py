@@ -8,22 +8,22 @@ from Adarsh.utils.human_readable import humanbytes
 from Adarsh.vars import Var
 from urllib.parse import quote_plus
 from pyrogram import filters, Client
-from pyrogram.errors import FloodWait, UserNotParticipant
+# PeerIdInvalid மற்றும் ChannelInvalid எரர்களை இறக்குமதி செய்கிறோம்
+from pyrogram.errors import FloodWait, UserNotParticipant, PeerIdInvalid, ChannelInvalid
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from Adarsh.utils.file_properties import get_name, get_hash, get_media_file_size
 db = Database(Var.DATABASE_URL, Var.name)
 
-# --- FINAL SETTINGS (நிரந்தர அமைப்புகள்) ---
+# --- FINAL SETTINGS ---
 BIN_CHANNEL_ID = -1003649271176
 MY_URL = "https://trm-team-file-to-link.onrender.com/"
-# -------------------------------------------
+# ----------------------
 
 MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
 pass_db = Database(Var.DATABASE_URL, "ag_passwords")
 
-# --- 1. START COMMAND (இதைத்தான் நான் மறந்திருந்தேன், இப்போது சேர்த்துள்ளேன்) ---
 @StreamBot.on_message(filters.command('start') & filters.private)
 async def start(b, m):
     if not await db.is_user_exist(m.from_user.id):
@@ -46,7 +46,6 @@ async def start(b, m):
             ),
         )
     else:
-        # ஃபைல் லிங்க் மூலம் வந்தால் நேரடியாக ஃபைலைக் கொடுக்கும் லாஜிக்
         try:
             get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
             file_name = get_name(get_msg)
@@ -78,8 +77,6 @@ async def about_handler(bot, message):
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id)
     await message.reply_text("<b>My Name: File to Link Bot</b>")
-
-# --- 2. LOGIN & FILE HANDLING ---
 
 @StreamBot.on_message((filters.regex("login🔑") | filters.command("login")) , group=4)
 async def login_handler(c: Client, m: Message):
@@ -118,13 +115,33 @@ async def private_receive_handler(c: Client, m: Message):
             return
     if not await db.is_user_exist(m.from_user.id):
         await db.add_user(m.from_user.id)
-        await c.send_message(
-            BIN_CHANNEL_ID,
-            f"Nᴇᴡ Usᴇʀ Jᴏɪɴᴇᴅ : \n\n Nᴀᴍᴇ : [{m.from_user.first_name}](tg://user?id={m.from_user.id}) Sᴛᴀʀᴛᴇᴅ Yᴏᴜʀ Bᴏᴛ !!"
-        )
+        try:
+            await c.send_message(
+                BIN_CHANNEL_ID,
+                f"Nᴇᴡ Usᴇʀ Jᴏɪɴᴇᴅ : \n\n Nᴀᴍᴇ : [{m.from_user.first_name}](tg://user?id={m.from_user.id}) Sᴛᴀʀᴛᴇᴅ Yᴏᴜʀ Bᴏᴛ !!"
+            )
+        except (PeerIdInvalid, ChannelInvalid):
+            # சேனலை புதுப்பிக்கும் முயற்சி
+            await c.get_chat(BIN_CHANNEL_ID)
+            await c.send_message(
+                BIN_CHANNEL_ID,
+                f"Nᴇᴡ Usᴇʀ Jᴏɪɴᴇᴅ : \n\n Nᴀᴍᴇ : [{m.from_user.first_name}](tg://user?id={m.from_user.id}) Sᴛᴀʀᴛᴇᴅ Yᴏᴜʀ Bᴏᴛ !!"
+            )
+        except Exception:
+            pass
     
     try:
-        log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
+        # --- இதுதான் முக்கியமான Auto-Fix பகுதி ---
+        try:
+            # முதலில் ஃபைலை அனுப்ப முயற்சிக்கிறது
+            log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
+        except (PeerIdInvalid, ChannelInvalid):
+            # பாட் சேனலை மறந்துவிட்டால், இந்த பகுதி வேலை செய்யும்
+            # சேனல் தகவலைப் புதுப்பிக்கிறோம் (Refresh)
+            await c.get_chat(BIN_CHANNEL_ID)
+            # மீண்டும் ஃபைலை அனுப்புகிறோம்
+            log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
+        # ------------------------------------------
         
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
@@ -151,8 +168,12 @@ async def private_receive_handler(c: Client, m: Message):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
                                                 InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
         )
+    except FloodWait as e:
+        print(f"Sleeping for {str(e.x)}s")
+        await asyncio.sleep(e.x)
+        await c.send_message(chat_id=BIN_CHANNEL_ID, text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`", disable_web_page_preview=True)
     except Exception as e:
-        # இங்கே எரர் வந்தாலும் பயனருக்குக் காட்டாது (Silent Mode)
+        # எரர் வந்தால் பயனருக்குக் காட்டாது (Silent Mode)
         print(f"Error: {e}") 
 
 @StreamBot.on_message(filters.channel & ~filters.group & (filters.document | filters.video | filters.photo) & ~filters.forwarded, group=-1)
@@ -198,4 +219,3 @@ async def channel_receive_handler(bot, broadcast):
     except Exception as e:
         await bot.send_message(chat_id=BIN_CHANNEL_ID, text=f"**#ᴇʀʀᴏʀ_ᴛʀᴀᴄᴇʙᴀᴄᴋ:** `{e}`", disable_web_page_preview=True)
         print(f"Cᴀɴ'ᴛ Eᴅɪᴛ Bʀᴏᴀᴅᴄᴀsᴛ Mᴇssᴀɢᴇ!\nEʀʀᴏʀ:  **Give me edit permission in updates and bin Chanell{e}**")
-
