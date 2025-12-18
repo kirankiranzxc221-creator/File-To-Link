@@ -1,7 +1,7 @@
 pyrogram
 tgcrypto
 aiohttp
-python
+python-dotenv
 motor
 aiofiles
 dnspython
@@ -9,3 +9,4 @@ apscheduler
 requests
 psutil
 pyromod
+
