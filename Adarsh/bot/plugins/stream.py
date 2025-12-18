@@ -14,9 +14,13 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from Adarsh.utils.file_properties import get_name, get_hash, get_media_file_size
 db = Database(Var.DATABASE_URL, Var.name)
 
-# --- HARDCODED CHANNEL ID ---
+# --- HARDCODED SETTINGS (நிரந்தர அமைப்புகள்) ---
+# 1. உங்கள் சேனல் ஐடி
 BIN_CHANNEL_ID = -1003649271176
-# ----------------------------
+
+# 2. உங்கள் பாட் URL (கடைசியில் / இருப்பது மிக முக்கியம்)
+MY_URL = "https://trm-team-file-to-link.onrender.com/"
+# ------------------------------------------------
 
 MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
@@ -66,11 +70,12 @@ async def private_receive_handler(c: Client, m: Message):
         )
     
     try:
-        # ஃபைலை சேனலுக்கு அனுப்பும் முயற்சி
+        # ஃபைலை சேனலுக்கு அனுப்புதல்
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
-        stream_link = f"{Var.URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
-        online_link = f"{Var.URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
+        # இங்கே Var.URL-க்கு பதில் நமது MY_URL பயன்படுத்தப்படுகிறது
+        stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
+        online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
         msg_text ="""
 <b>ʏᴏᴜʀ ʟɪɴᴋ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ...⚡
@@ -95,12 +100,51 @@ async def private_receive_handler(c: Client, m: Message):
                                                 InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
         )
     except Exception as e:
-        # எரர் வந்தால் பாட் அதை உங்களுக்கே மெசேஜாக அனுப்பும்
         print(f"Error: {e}")
-        await m.reply_text(f"⚠️ **ERROR:** \n\n`{e}`\n\nஇந்த எரர் மெசேஜை எனக்கு அனுப்புங்கள், நான் சரி செய்கிறேன்!")
+        await m.reply_text(f"⚠️ **ERROR:** \n\n`{e}`")
 
 @StreamBot.on_message(filters.channel & ~filters.group & (filters.document | filters.video | filters.photo) & ~filters.forwarded, group=-1)
 async def channel_receive_handler(bot, broadcast):
-    # சேனல் ஹேண்ட்லர் அப்படியே உள்ளது
-    pass
+    if MY_PASS:
+        check_pass = await pass_db.get_user_pass(broadcast.chat.id)
+        if check_pass == None:
+            await broadcast.reply_text("Login first using /login cmd \n don\'t know the pass? request it from @opustechz")
+            return
+        if check_pass != MY_PASS:
+            await broadcast.reply_text("Wrong password, login again")
+            await pass_db.delete_user(broadcast.chat.id)
+            return
+    if int(broadcast.chat.id) in Var.BANNED_CHANNELS:
+        await bot.leave_chat(broadcast.chat.id)
+        return
+    try:
+        log_msg = await broadcast.forward(chat_id=BIN_CHANNEL_ID)
+        
+        # இங்கேயும் MY_URL பயன்படுத்துகிறோம்
+        stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"       
+        online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
+        
+        await log_msg.reply_text(
+            text=f"**Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:** `{broadcast.chat.title}`\n**Cʜᴀɴɴᴇʟ ID:** `{broadcast.chat.id}`\n**Rᴇǫᴜᴇsᴛ ᴜʀʟ:** {stream_link}",
+            quote=True
+        )
+        await bot.edit_message_reply_markup(
+            chat_id=broadcast.chat.id,
+            id=broadcast.id,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
+                     InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)] 
+                ]
+            )
+        )
+    except FloodWait as w:
+        print(f"Sleeping for {str(w.x)}s")
+        await asyncio.sleep(w.x)
+        await bot.send_message(chat_id=BIN_CHANNEL_ID,
+                             text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(w.x)}s from {broadcast.chat.title}\n\n**Cʜᴀɴɴᴇʟ ID:** `{str(broadcast.chat.id)}`",
+                             disable_web_page_preview=True)
+    except Exception as e:
+        await bot.send_message(chat_id=BIN_CHANNEL_ID, text=f"**#ᴇʀʀᴏʀ_ᴛʀᴀᴄᴇʙᴀᴄᴋ:** `{e}`", disable_web_page_preview=True)
+        print(f"Cᴀɴ'ᴛ Eᴅɪᴛ Bʀᴏᴀᴅᴄᴀsᴛ Mᴇssᴀɢᴇ!\nEʀʀᴏʀ:  **Give me edit permission in updates and bin Chanell{e}**")
 
