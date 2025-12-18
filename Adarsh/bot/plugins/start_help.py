@@ -23,6 +23,63 @@ MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
 pass_db = Database(Var.DATABASE_URL, "ag_passwords")
 
+# --- 1. START COMMAND (இதைத்தான் நான் மறந்திருந்தேன், இப்போது சேர்த்துள்ளேன்) ---
+@StreamBot.on_message(filters.command('start') & filters.private)
+async def start(b, m):
+    if not await db.is_user_exist(m.from_user.id):
+        await db.add_user(m.from_user.id)
+        await b.send_message(
+            BIN_CHANNEL_ID,
+            f"#NEW_USER: \n\nNew User [{m.from_user.first_name}](tg://user?id={m.from_user.id}) Started !!"
+        )
+    usr_cmd = m.text.split("_")[-1]
+    if usr_cmd == "/start":
+        await m.reply_photo(
+            photo="https://telegra.ph/file/3cd15a67ad7234c2945e7.jpg",
+            caption="**ʜᴇʟʟᴏ...⚡\n\nɪᴀᴍ ᴀ sɪᴍᴘʟᴇ ᴛᴇʟᴇɢʀᴀᴍ ғɪʟᴇ/ᴠɪᴅᴇᴏ ᴛᴏ ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋ ᴀɴᴅ sᴛʀᴇᴀᴍ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ.**\n\n**ᴜsᴇ /help ғᴏʀ ᴍᴏʀᴇ ᴅᴇᴛsɪʟs\n\nsᴇɴᴅ ᴍᴇ ᴀɴʏ ᴠɪᴅᴇᴏ / ғɪʟᴇ ᴛᴏ sᴇᴇ ᴍʏ ᴘᴏᴡᴇʀᴢ...**",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("⚡ ᴜᴘᴅᴀᴛᴇᴢ ⚡", url="https://t.me/MWUpdatez"), InlineKeyboardButton("⚡ sᴜᴘᴘᴏʀᴛ ⚡", url="https://t.me/OpusTechz")],
+                    [InlineKeyboardButton("💸 ᴅᴏɴᴀᴛᴇ 💸", url="https://paypal.me/114912Aadil"), InlineKeyboardButton("💠 ɢɪᴛʜᴜʙ 💠", url="https://github.com/Aadhi000")],
+                    [InlineKeyboardButton("💌 sᴜʙsᴄʀɪʙᴇ 💌", url="https://youtube.com/opustechz")]
+                ]
+            ),
+        )
+    else:
+        # ஃபைல் லிங்க் மூலம் வந்தால் நேரடியாக ஃபைலைக் கொடுக்கும் லாஜிக்
+        try:
+            get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
+            file_name = get_name(get_msg)
+            stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
+            online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
+            
+            msg_text = "**ᴛᴏᴜʀ ʟɪɴᴋ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ...⚡\n\n📧 ғɪʟᴇ ɴᴀᴍᴇ :-\n{}\n\n💌 ᴅᴏᴡɴʟᴏᴀᴅ ʟɪɴᴋ :- {}\n\n♻️ ᴛʜɪs ʟɪɴᴋ ɪs ᴘᴇʀᴍᴀɴᴇɴᴛ ᴀɴᴅ ᴡᴏɴ'ᴛ ɢᴇᴛ ᴇxᴘɪʀᴇᴅ ♻️**"
+            await m.reply_text(
+                text=msg_text.format(file_name, stream_link),
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]])
+            )
+        except Exception as e:
+            await m.reply_text("Somthing went wrong. Maybe file deleted.")
+
+@StreamBot.on_message(filters.command('help') & filters.private)
+async def help_handler(bot, message):
+    if not await db.is_user_exist(message.from_user.id):
+        await db.add_user(message.from_user.id)
+    await message.reply_photo(
+        photo="https://telegra.ph/file/3cd15a67ad7234c2945e7.jpg",
+        caption="**Send me any file to get the link.**",
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("⚡ sᴜᴘᴘᴏʀᴛ ⚡", url="https://t.me/OpusTechz")]]
+        )
+    )
+
+@StreamBot.on_message(filters.command('about') & filters.private)
+async def about_handler(bot, message):
+    if not await db.is_user_exist(message.from_user.id):
+        await db.add_user(message.from_user.id)
+    await message.reply_text("<b>My Name: File to Link Bot</b>")
+
+# --- 2. LOGIN & FILE HANDLING ---
 
 @StreamBot.on_message((filters.regex("login🔑") | filters.command("login")) , group=4)
 async def login_handler(c: Client, m: Message):
@@ -94,14 +151,9 @@ async def private_receive_handler(c: Client, m: Message):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
                                                 InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
         )
-    except FloodWait as e:
-        print(f"Sleeping for {str(e.x)}s")
-        await asyncio.sleep(e.x)
-        await c.send_message(chat_id=BIN_CHANNEL_ID, text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`", disable_web_page_preview=True)
     except Exception as e:
-        # எரர் வந்தால் பயனருக்குக் காட்டாது, ஆனால் உள்ளுக்குள் பதிவு செய்யும்.
-        print(f"Error: {e}")
-        # await m.reply_text(f"⚠️ ERROR: {e}") <--- இந்த வரி நீக்கப்பட்டது
+        # இங்கே எரர் வந்தாலும் பயனருக்குக் காட்டாது (Silent Mode)
+        print(f"Error: {e}") 
 
 @StreamBot.on_message(filters.channel & ~filters.group & (filters.document | filters.video | filters.photo) & ~filters.forwarded, group=-1)
 async def channel_receive_handler(bot, broadcast):
