@@ -47,11 +47,15 @@ async def start(b, m):
     else:
         try:
             get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
-            file_name = get_name(get_msg)
-            stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
-            online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
             
-            # நீங்கள் கேட்ட டிசைன் (Start Link வழியாக வரும்போது)
+            # --- FIX FOR START COMMAND ---
+            # கேப்ஷன் இருந்தால் அதை எடு, இல்லையென்றால் ஃபைல் பெயரை எடு
+            file_name = get_msg.caption if get_msg.caption else get_name(get_msg)
+            
+            stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
+            online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
+            
+            # நீங்கள் கேட்ட டிசைன்
             caption_text = f"""
 **{file_name}**
 
@@ -144,9 +148,14 @@ async def private_receive_handler(c: Client, m: Message):
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # --- நீங்கள் கேட்ட சரியான டிசைன் ---
+        # --- FIX FOR FILE NAME (முக்கிய மாற்றம்) ---
+        # பழைய get_name(log_msg) க்கு பதிலாக log_msg.caption பயன்படுத்துகிறோம்.
+        # இது முழு கேப்ஷனையும் எடுத்துக்கொள்ளும்.
+        
+        full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
+
         custom_caption = f"""
-**{get_name(log_msg)}**
+**{full_caption_text}**
 
 👀 Watch online & Download👇🏻
 {stream_link}
@@ -159,7 +168,6 @@ Uploading By ~ @TRM_Team
 ╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
 """
         
-        # log_msg.copy என்றால் ஃபைலையே திருப்பி அனுப்பும்
         await log_msg.copy(
             chat_id=m.chat.id,
             caption=custom_caption,
