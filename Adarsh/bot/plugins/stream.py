@@ -1,6 +1,7 @@
 #(c) Adarsh-Goel
 import os
 import asyncio
+import re  # முக்கியம்: எழுத்துக்களை மாற்றியமைக்க இது தேவை
 from asyncio import TimeoutError
 from Adarsh.bot import StreamBot
 from Adarsh.utils.database import Database
@@ -48,16 +49,17 @@ async def start(b, m):
         try:
             get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
             
-            # --- FIX FOR START COMMAND ---
-            # கேப்ஷன் இருந்தால் அதை எடு, இல்லையென்றால் ஃபைல் பெயரை எடு
+            # --- START COMMAND FIX ---
             file_name = get_msg.caption if get_msg.caption else get_name(get_msg)
             
+            # .mkv, .mp4 போன்றவற்றை பெயரில் இருந்து நீக்குதல்
+            clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', file_name, flags=re.IGNORECASE)
+
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
             online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
             
-            # நீங்கள் கேட்ட டிசைன்
             caption_text = f"""
-**{file_name}**
+**{clean_filename}**
 
 👀 Watch online & Download👇🏻
 {stream_link}
@@ -148,14 +150,14 @@ async def private_receive_handler(c: Client, m: Message):
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # --- FIX FOR FILE NAME (முக்கிய மாற்றம்) ---
-        # பழைய get_name(log_msg) க்கு பதிலாக log_msg.caption பயன்படுத்துகிறோம்.
-        # இது முழு கேப்ஷனையும் எடுத்துக்கொள்ளும்.
-        
+        # --- CLEAN CAPTION LOGIC ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
+        
+        # இங்கேதான் மேஜிக் நடக்கிறது! (Removes .mkv, .mp4 at the end)
+        clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
 
         custom_caption = f"""
-**{full_caption_text}**
+**{clean_filename}**
 
 👀 Watch online & Download👇🏻
 {stream_link}
@@ -230,4 +232,4 @@ async def channel_receive_handler(bot, broadcast):
     except Exception as e:
         await bot.send_message(chat_id=BIN_CHANNEL_ID, text=f"**#ᴇʀʀᴏʀ_ᴛʀᴀᴄᴇʙᴀᴄᴋ:** `{e}`", disable_web_page_preview=True)
         print(f"Cᴀɴ'ᴛ Eᴅɪᴛ Bʀᴏᴀᴅᴄᴀsᴛ Mᴇssᴀɢᴇ!\nEʀʀᴏʀ:  **Give me edit permission in updates and bin Chanell{e}**")
-
+   
