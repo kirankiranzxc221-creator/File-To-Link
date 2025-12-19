@@ -8,7 +8,7 @@ from Adarsh.utils.human_readable import humanbytes
 from Adarsh.vars import Var
 from urllib.parse import quote_plus
 from pyrogram import filters, Client
-from pyrogram.errors import FloodWait, UserNotParticipant
+from pyrogram.errors import FloodWait, UserNotParticipant, PeerIdInvalid, ChannelInvalid
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from Adarsh.utils.file_properties import get_name, get_hash, get_media_file_size
@@ -51,11 +51,21 @@ async def start(b, m):
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
             online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(file_name)}?hash={get_hash(get_msg)}"
             
-            msg_text = "**ᴛᴏᴜʀ ʟɪɴᴋ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ...⚡\n\n📧 ғɪʟᴇ ɴᴀᴍᴇ :-\n{}\n\n💌 ᴅᴏᴡɴʟᴏᴀᴅ ʟɪɴᴋ :- {}\n\n♻️ ᴛʜɪs ʟɪɴᴋ ɪs ᴘᴇʀᴍᴀɴᴇɴᴛ ᴀɴᴅ ᴡᴏɴ'ᴛ ɢᴇᴛ ᴇxᴘɪʀᴇᴅ ♻️**"
-            await m.reply_text(
-                text=msg_text.format(file_name, stream_link),
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]])
-            )
+            # நீங்கள் கேட்ட டிசைன் (Start Link வழியாக வரும்போது)
+            caption_text = f"""
+**{file_name}**
+
+👀 Watch online & Download👇🏻
+{stream_link}
+
+𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
+ ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
+Uploading By ~ @TRM_Team 
+╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+"""
+            await get_msg.copy(chat_id=m.chat.id, caption=caption_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]]))
         except Exception as e:
             await m.reply_text("Somthing went wrong. Maybe file deleted.")
 
@@ -114,7 +124,6 @@ async def private_receive_handler(c: Client, m: Message):
             return
     if not await db.is_user_exist(m.from_user.id):
         await db.add_user(m.from_user.id)
-        # புதிய யூசர் வந்தால் சேனலுக்குத் தகவல் சொல்வது
         try:
             await c.send_message(
                 BIN_CHANNEL_ID,
@@ -124,48 +133,45 @@ async def private_receive_handler(c: Client, m: Message):
             pass
     
     try:
-        # --- இதுதான் நீங்கள் கேட்ட அந்த முக்கியமான FIX ---
-        # ஃபைலை அனுப்புவதற்கு முன், பாட்டை சேனலைப் பார்க்கச் சொல்கிறோம் (Refresh)
-        # இது PeerIdInvalid வராமல் தடுக்கும்.
+        # Auto-Fix Logic for PeerIdInvalid
         try:
             await c.get_chat(BIN_CHANNEL_ID)
         except Exception:
             pass
-        # ---------------------------------------------
 
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        msg_text ="""
-<b>ʏᴏᴜʀ ʟɪɴᴋ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ...⚡
+        # --- நீங்கள் கேட்ட சரியான டிசைன் ---
+        custom_caption = f"""
+**{get_name(log_msg)}**
 
-<b>📧 ғɪʟᴇ ɴᴀᴍᴇ :- </b> <i><b>{}</b></i>
+👀 Watch online & Download👇🏻
+{stream_link}
 
-<b>📦 ғɪʟᴇ sɪᴢᴇ :- </b> <i><b>{}</b></i>
+𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
+ ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-<b>💌 ᴅᴏᴡɴʟᴏᴀᴅ ʟɪɴᴋ :- </b> <i><b>{}</b></i>
-
-<b>🖥 ᴡᴀᴛᴄʜ ᴏɴʟɪɴᴇ :- </b> <i><b>{}</b></i>
-
-<b>♻️ ᴛʜɪs ʟɪɴᴋ ɪs ᴘᴇʀᴍᴀɴᴇɴᴛ ᴀɴᴅ ᴡᴏɴ'ᴛ ɢᴇᴛs ᴇxᴘɪʀᴇᴅ ♻️\n\n❖ YouTube.com/OpusTechz</b>"""
-
-        await log_msg.reply_text(text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n**Uꜱᴇʀ ɪᴅ :** `{m.from_user.id}`\n**Stream ʟɪɴᴋ :** {stream_link}", disable_web_page_preview=True, quote=True)
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
+Uploading By ~ @TRM_Team 
+╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+"""
         
-        await m.reply_text(
-            text=msg_text.format(get_name(log_msg), humanbytes(get_media_file_size(m)), online_link, stream_link),
-            quote=True,
-            disable_web_page_preview=True,
+        # log_msg.copy என்றால் ஃபைலையே திருப்பி அனுப்பும்
+        await log_msg.copy(
+            chat_id=m.chat.id,
+            caption=custom_caption,
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
                                                 InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
         )
+
     except FloodWait as e:
         print(f"Sleeping for {str(e.x)}s")
         await asyncio.sleep(e.x)
         await c.send_message(chat_id=BIN_CHANNEL_ID, text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`", disable_web_page_preview=True)
     except Exception as e:
-        # எரர் வந்தால் சர்வரில் மட்டும் பதிவு செய்யும், உங்களுக்கு மெசேஜ் அனுப்பாது.
         print(f"Error: {e}") 
 
 @StreamBot.on_message(filters.channel & ~filters.group & (filters.document | filters.video | filters.photo) & ~filters.forwarded, group=-1)
@@ -183,7 +189,6 @@ async def channel_receive_handler(bot, broadcast):
         await bot.leave_chat(broadcast.chat.id)
         return
     try:
-        # இங்கேயும் அந்த FIX-ஐச் சேர்த்துள்ளேன்
         try:
             await bot.get_chat(BIN_CHANNEL_ID)
         except Exception:
