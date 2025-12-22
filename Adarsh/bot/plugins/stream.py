@@ -1,7 +1,8 @@
 #(c) Adarsh-Goel
 import os
 import asyncio
-import re  # முக்கியம்: எழுத்துக்களை மாற்றியமைக்க இது தேவை
+import re
+import requests
 from asyncio import TimeoutError
 from Adarsh.bot import StreamBot
 from Adarsh.utils.database import Database
@@ -18,14 +19,40 @@ db = Database(Var.DATABASE_URL, Var.name)
 # --- SETTINGS ---
 BIN_CHANNEL_ID = -1003649271176
 MY_URL = "https://trm-team-file-to-link.onrender.com/"
+
+# 👇 உங்கள் ShrinkMe API கீ இங்கே சேர்க்கப்பட்டுள்ளது
+SHRINKME_API_KEY = "C9d148b22dd2205f2a76fa26ade14f5c9c21c04d"
 # ----------------
 
 MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
 pass_db = Database(Var.DATABASE_URL, "ag_passwords")
 
+# --- ShrinkMe Shortener Function ---
+def get_short_link(long_url):
+    try:
+        api_url = "https://shrinkme.io/api"
+        params = {'api': SHRINKME_API_KEY, 'url': long_url}
+        response = requests.get(api_url, params=params)
+        data = response.json()
+        
+        if data['status'] == 'success':
+            return data['shortenedUrl']
+        else:
+            return long_url
+    except Exception as e:
+        print(f"Shortener Error: {e}")
+        return long_url
+# -----------------------------------
+
 @StreamBot.on_message(filters.command('start') & filters.private)
 async def start(b, m):
+    # --- OWNER CHECK ---
+    if m.from_user.id not in Var.OWNER_ID:
+        await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
+        return
+    # -------------------
+
     if not await db.is_user_exist(m.from_user.id):
         await db.add_user(m.from_user.id)
         await b.send_message(
@@ -49,20 +76,19 @@ async def start(b, m):
         try:
             get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
             
-            # --- START COMMAND FIX ---
             file_name = get_msg.caption if get_msg.caption else get_name(get_msg)
-            
-            # .mkv, .mp4 போன்றவற்றை பெயரில் இருந்து நீக்குதல்
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', file_name, flags=re.IGNORECASE)
 
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
-            online_link = f"{MY_URL}{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
             
+            # லிங்க்கை சுருக்குதல்
+            short_link = get_short_link(stream_link)
+
             caption_text = f"""
 **{clean_filename}**
 
 👀 Watch online & Download👇🏻
-{stream_link}
+{short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
@@ -120,6 +146,12 @@ async def login_handler(c: Client, m: Message):
 
 @StreamBot.on_message((filters.private) & (filters.document | filters.video | filters.audio | filters.photo) , group=4)
 async def private_receive_handler(c: Client, m: Message):
+    # --- OWNER CHECK ---
+    if m.from_user.id not in Var.OWNER_ID:
+        await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
+        return
+    # -------------------
+
     if MY_PASS:
         check_pass = await pass_db.get_user_pass(m.chat.id)
         if check_pass== None:
@@ -147,20 +179,22 @@ async def private_receive_handler(c: Client, m: Message):
 
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
+        # 1. டைரக்ட் லிங்க்
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # --- CLEAN CAPTION LOGIC ---
+        # 2. ShrinkMe லிங்க் (பணம் ஈட்ட) 🤑
+        short_link = get_short_link(stream_link)
+
+        # 3. கேப்ஷன் கிளீனிங்
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
-        
-        # இங்கேதான் மேஜிக் நடக்கிறது! (Removes .mkv, .mp4 at the end)
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
 
         custom_caption = f"""
 **{clean_filename}**
 
 👀 Watch online & Download👇🏻
-{stream_link}
+{short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
@@ -209,8 +243,11 @@ async def channel_receive_handler(bot, broadcast):
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"       
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
+        # ShrinkMe லிங்க்
+        short_link = get_short_link(stream_link)
+
         await log_msg.reply_text(
-            text=f"**Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:** `{broadcast.chat.title}`\n**Cʜᴀɴɴᴇʟ ID:** `{broadcast.chat.id}`\n**Rᴇǫᴜᴇsᴛ ᴜʀʟ:** {stream_link}",
+            text=f"**Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:** `{broadcast.chat.title}`\n**Cʜᴀɴɴᴇʟ ID:** `{broadcast.chat.id}`\n**Rᴇǫᴜᴇsᴛ ᴜʀʟ:** {short_link}",
             quote=True
         )
         await bot.edit_message_reply_markup(
@@ -232,4 +269,5 @@ async def channel_receive_handler(bot, broadcast):
     except Exception as e:
         await bot.send_message(chat_id=BIN_CHANNEL_ID, text=f"**#ᴇʀʀᴏʀ_ᴛʀᴀᴄᴇʙᴀᴄᴋ:** `{e}`", disable_web_page_preview=True)
         print(f"Cᴀɴ'ᴛ Eᴅɪᴛ Bʀᴏᴀᴅᴄᴀsᴛ Mᴇssᴀɢᴇ!\nEʀʀᴏʀ:  **Give me edit permission in updates and bin Chanell{e}**")
+
    
