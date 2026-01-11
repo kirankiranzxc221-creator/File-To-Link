@@ -19,8 +19,6 @@ db = Database(Var.DATABASE_URL, Var.name)
 # --- SETTINGS ---
 BIN_CHANNEL_ID = -1003649271176
 MY_URL = "https://trm-team-file-to-link.onrender.com/"
-
-# 👇 உங்கள் ShrinkMe API கீ இங்கே சேர்க்கப்பட்டுள்ளது
 SHRINKME_API_KEY = "C9d148b22dd2205f2a76fa26ade14f5c9c21c04d"
 # ----------------
 
@@ -47,11 +45,9 @@ def get_short_link(long_url):
 
 @StreamBot.on_message(filters.command('start') & filters.private)
 async def start(b, m):
-    # --- OWNER CHECK ---
     if m.from_user.id not in Var.OWNER_ID:
         await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
         return
-    # -------------------
 
     if not await db.is_user_exist(m.from_user.id):
         await db.add_user(m.from_user.id)
@@ -76,16 +72,31 @@ async def start(b, m):
         try:
             get_msg = await b.get_messages(chat_id=BIN_CHANNEL_ID, ids=int(usr_cmd))
             
-            file_name = get_msg.caption if get_msg.caption else get_name(get_msg)
-            clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', file_name, flags=re.IGNORECASE)
+            # --- START COMMAND LOGIC ---
+            full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
+            
+            # 1. Remove Extension
+            clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+            
+            # 2. 🔥 NEW: Replace Underscore (_) with Space ( ) for CLEAN DISPLAY
+            clean_filename = clean_filename.replace('_', ' ')
+
+            # 3. Force Prefix (@TRM_Team - )
+            if not clean_filename.strip().startswith("@TRM_Team"):
+                 display_filename = f"@TRM_Team - {clean_filename}"
+            else:
+                 display_filename = clean_filename
+            
+            # 4. Create Safe Name for Link (Replace spaces with _)
+            safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+            # ------------------
 
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
-            
-            # லிங்க்கை சுருக்குதல்
-            short_link = get_short_link(stream_link)
+            safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{safe_name_for_link}?hash={get_hash(get_msg)}"
+            short_link = get_short_link(safe_url_for_shortener)
 
             caption_text = f"""
-**{clean_filename}**
+**{display_filename}**
 
 👀 Watch online & Download👇🏻
 {short_link}
@@ -100,6 +111,20 @@ Uploading By ~ @TRM_Team
             await get_msg.copy(chat_id=m.chat.id, caption=caption_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]]))
         except Exception as e:
             await m.reply_text("Somthing went wrong. Maybe file deleted.")
+
+@StreamBot.on_message(filters.regex(r'https?://[^\s]+') & filters.private)
+async def link_handler(c, m):
+    if m.from_user.id not in Var.OWNER_ID:
+        return 
+    
+    urls = re.findall(r'https?://[^\s]+', m.text)
+    if urls:
+        reply_text = "✅ **Shortened Links:**\n\n"
+        for url in urls:
+            short = get_short_link(url)
+            reply_text += f"🔹 {short}\n\n"
+        
+        await m.reply_text(reply_text, quote=True, disable_web_page_preview=True)
 
 @StreamBot.on_message(filters.command('help') & filters.private)
 async def help_handler(bot, message):
@@ -146,11 +171,9 @@ async def login_handler(c: Client, m: Message):
 
 @StreamBot.on_message((filters.private) & (filters.document | filters.video | filters.audio | filters.photo) , group=4)
 async def private_receive_handler(c: Client, m: Message):
-    # --- OWNER CHECK ---
     if m.from_user.id not in Var.OWNER_ID:
         await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
         return
-    # -------------------
 
     if MY_PASS:
         check_pass = await pass_db.get_user_pass(m.chat.id)
@@ -171,7 +194,6 @@ async def private_receive_handler(c: Client, m: Message):
             pass
     
     try:
-        # Auto-Fix Logic for PeerIdInvalid
         try:
             await c.get_chat(BIN_CHANNEL_ID)
         except Exception:
@@ -179,19 +201,33 @@ async def private_receive_handler(c: Client, m: Message):
 
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
-        # 1. டைரக்ட் லிங்க்
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # 2. ShrinkMe லிங்க் (பணம் ஈட்ட) 🤑
-        short_link = get_short_link(stream_link)
-
-        # 3. கேப்ஷன் கிளீனிங்
+        # --- NAME LOGIC (Private Message) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
+        
+        # 1. Remove Extension
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+        
+        # 2. 🔥 NEW: Replace Underscore (_) with Space ( ) for CLEAN DISPLAY
+        clean_filename = clean_filename.replace('_', ' ')
+        
+        # 3. Force Prefix (@TRM_Team - )
+        if not clean_filename.strip().startswith("@TRM_Team"):
+                display_filename = f"@TRM_Team - {clean_filename}"
+        else:
+                display_filename = clean_filename
+        
+        # 4. Create Safe Name for Link (Replace spaces with _)
+        safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+        # ----------------------------
+
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
+        short_link = get_short_link(safe_url_for_shortener)
 
         custom_caption = f"""
-**{clean_filename}**
+**{display_filename}**
 
 👀 Watch online & Download👇🏻
 {short_link}
@@ -243,8 +279,23 @@ async def channel_receive_handler(bot, broadcast):
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"       
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # ShrinkMe லிங்க்
-        short_link = get_short_link(stream_link)
+        # --- NAME LOGIC (Channel) ---
+        full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
+        clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+        
+        # 🔥 NEW: Replace Underscore with Space
+        clean_filename = clean_filename.replace('_', ' ')
+
+        if not clean_filename.strip().startswith("@TRM_Team"):
+                display_filename = f"@TRM_Team - {clean_filename}"
+        else:
+                display_filename = clean_filename
+        
+        safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+        # ----------------------------
+
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
+        short_link = get_short_link(safe_url_for_shortener)
 
         await log_msg.reply_text(
             text=f"**Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:** `{broadcast.chat.title}`\n**Cʜᴀɴɴᴇʟ ID:** `{broadcast.chat.id}`\n**Rᴇǫᴜᴇsᴛ ᴜʀʟ:** {short_link}",
@@ -269,5 +320,3 @@ async def channel_receive_handler(bot, broadcast):
     except Exception as e:
         await bot.send_message(chat_id=BIN_CHANNEL_ID, text=f"**#ᴇʀʀᴏʀ_ᴛʀᴀᴄᴇʙᴀᴄᴋ:** `{e}`", disable_web_page_preview=True)
         print(f"Cᴀɴ'ᴛ Eᴅɪᴛ Bʀᴏᴀᴅᴄᴀsᴛ Mᴇssᴀɢᴇ!\nEʀʀᴏʀ:  **Give me edit permission in updates and bin Chanell{e}**")
-
-   
