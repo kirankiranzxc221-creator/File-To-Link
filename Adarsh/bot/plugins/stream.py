@@ -75,24 +75,21 @@ async def start(b, m):
             # --- START COMMAND LOGIC ---
             full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
             
-            # 1. Remove Extension
+            # 1. Clean Name (Remove Extension & Replace _ with Space)
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
-            
-            # 2. 🔥 NEW: Replace Underscore (_) with Space ( ) for CLEAN DISPLAY
             clean_filename = clean_filename.replace('_', ' ')
 
-            # 3. Force Prefix (@TRM_Team - )
-            if not clean_filename.strip().startswith("@TRM_Team"):
-                 display_filename = f"@TRM_Team - {clean_filename}"
-            else:
-                 display_filename = clean_filename
+            # பெயர் மாற்றம் எதுவும் செய்யாமல் அப்படியே வைக்கிறோம்
+            display_filename = clean_filename
             
-            # 4. Create Safe Name for Link (Replace spaces with _)
+            # 2. Create Safe Name for Link (Replace spaces with _)
             safe_name_for_link = re.sub(r'\s+', '_', display_filename)
-            # ------------------
-
+            
+            # 3. Links Generation
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
-            safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{safe_name_for_link}?hash={get_hash(get_msg)}"
+            
+            # Using quote_plus to handle special characters safely
+            safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
 
             caption_text = f"""
@@ -201,29 +198,26 @@ async def private_receive_handler(c: Client, m: Message):
 
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
+        # 1. Links Generation
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
         # --- NAME LOGIC (Private Message) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
         
-        # 1. Remove Extension
+        # 1. Remove Extension & Replace _ with Space
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
-        
-        # 2. 🔥 NEW: Replace Underscore (_) with Space ( ) for CLEAN DISPLAY
         clean_filename = clean_filename.replace('_', ' ')
         
-        # 3. Force Prefix (@TRM_Team - )
-        if not clean_filename.strip().startswith("@TRM_Team"):
-                display_filename = f"@TRM_Team - {clean_filename}"
-        else:
-                display_filename = clean_filename
+        # பெயர் மாற்றம் எதுவும் செய்யாமல் அப்படியே வைக்கிறோம்
+        display_filename = clean_filename
         
-        # 4. Create Safe Name for Link (Replace spaces with _)
+        # 2. Create Safe Name for Link (Replace spaces with _)
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
         # ----------------------------
 
-        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
+        # Using quote_plus to prevent Invalid Hash
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
         custom_caption = f"""
@@ -281,20 +275,19 @@ async def channel_receive_handler(bot, broadcast):
         
         # --- NAME LOGIC (Channel) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
-        clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
         
-        # 🔥 NEW: Replace Underscore with Space
+        # 1. Clean Filename
+        clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
         clean_filename = clean_filename.replace('_', ' ')
 
-        if not clean_filename.strip().startswith("@TRM_Team"):
-                display_filename = f"@TRM_Team - {clean_filename}"
-        else:
-                display_filename = clean_filename
+        # பெயர் மாற்றம் இல்லை
+        display_filename = clean_filename
         
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
         # ----------------------------
 
-        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
+        # Using quote_plus to prevent Invalid Hash
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
         await log_msg.reply_text(
