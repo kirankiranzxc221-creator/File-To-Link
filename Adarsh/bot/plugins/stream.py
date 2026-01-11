@@ -75,20 +75,18 @@ async def start(b, m):
             # --- START COMMAND LOGIC ---
             full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
             
-            # 1. Clean Name (Remove Extension & Replace _ with Space)
+            # 1. Clean Name
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
             clean_filename = clean_filename.replace('_', ' ')
 
-            # பெயர் மாற்றம் எதுவும் செய்யாமல் அப்படியே வைக்கிறோம்
+            # பெயர் மாற்றம் இல்லை (நீங்கள் கேட்டபடி)
             display_filename = clean_filename
             
-            # 2. Create Safe Name for Link (Replace spaces with _)
+            # 2. Safe Name for Link
             safe_name_for_link = re.sub(r'\s+', '_', display_filename)
             
             # 3. Links Generation
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
-            
-            # Using quote_plus to handle special characters safely
             safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
 
@@ -198,25 +196,24 @@ async def private_receive_handler(c: Client, m: Message):
 
         log_msg = await m.forward(chat_id=BIN_CHANNEL_ID)
         
-        # 1. Links Generation
+        # 1. Links
         stream_link = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         online_link = f"{MY_URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
         
-        # --- NAME LOGIC (Private Message) ---
+        # --- NAME LOGIC (Private) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
         
-        # 1. Remove Extension & Replace _ with Space
+        # Clean
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
         clean_filename = clean_filename.replace('_', ' ')
         
         # பெயர் மாற்றம் எதுவும் செய்யாமல் அப்படியே வைக்கிறோம்
         display_filename = clean_filename
         
-        # 2. Create Safe Name for Link (Replace spaces with _)
+        # Safe Link
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
-        # ----------------------------
 
-        # Using quote_plus to prevent Invalid Hash
+        # ShrinkMe
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
@@ -276,7 +273,7 @@ async def channel_receive_handler(bot, broadcast):
         # --- NAME LOGIC (Channel) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
         
-        # 1. Clean Filename
+        # Clean
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
         clean_filename = clean_filename.replace('_', ' ')
 
@@ -284,19 +281,29 @@ async def channel_receive_handler(bot, broadcast):
         display_filename = clean_filename
         
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
-        # ----------------------------
 
-        # Using quote_plus to prevent Invalid Hash
+        # ShrinkMe
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
-
-        await log_msg.reply_text(
-            text=f"**Cʜᴀɴɴᴇʟ Nᴀᴍᴇ:** `{broadcast.chat.title}`\n**Cʜᴀɴɴᴇʟ ID:** `{broadcast.chat.id}`\n**Rᴇǫᴜᴇsᴛ ᴜʀʟ:** {short_link}",
-            quote=True
-        )
-        await bot.edit_message_reply_markup(
+        
+        # 🔥 முக்கியம்: சேனலில் போஸ்ட் செய்யும்போது Text-க்கு பதில் File Copy அனுப்புகிறோம்
+        # பழைய Text Message லாஜிக்கை தூக்கிவிட்டேன்
+        
+        await log_msg.copy(
             chat_id=broadcast.chat.id,
-            id=broadcast.id,
+            caption=f"""
+**{display_filename}**
+
+👀 Watch online & Download👇🏻
+{short_link}
+
+𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
+ ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
+Uploading By ~ @TRM_Team 
+╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+""",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
