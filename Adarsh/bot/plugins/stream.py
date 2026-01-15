@@ -75,17 +75,23 @@ async def start(b, m):
             # --- START COMMAND LOGIC ---
             full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
             
-            # 1. Clean Name
+            # 1. Remove Extension
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+            
+            # 2. 🔥 SMART CLEANER: Remove ANY existing TRM tag from the start
+            # இது பழைய @TRM Team, TRM_Team போன்ற எதை இருந்தாலும் முதலில் நீக்கிவிடும்
+            clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
+            
+            # 3. Clean the Movie Name (Replace _ with Space)
             clean_filename = clean_filename.replace('_', ' ')
 
-            # பெயர் மாற்றம் இல்லை (நீங்கள் கேட்டபடி)
-            display_filename = clean_filename
+            # 4. Add the CORRECT Prefix
+            display_filename = f"@TRM_Team - {clean_filename.strip()}"
             
-            # 2. Safe Name for Link
+            # 5. Create Safe Name for Link
             safe_name_for_link = re.sub(r'\s+', '_', display_filename)
             
-            # 3. Links Generation
+            # 6. Links Generation
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
             safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
@@ -203,12 +209,17 @@ async def private_receive_handler(c: Client, m: Message):
         # --- NAME LOGIC (Private) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
         
-        # Clean
+        # Clean Name
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+        
+        # 🔥 SMART CLEANER: Remove existing prefix first
+        clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
+        
+        # Clean Underscores
         clean_filename = clean_filename.replace('_', ' ')
         
-        # பெயர் மாற்றம் எதுவும் செய்யாமல் அப்படியே வைக்கிறோம்
-        display_filename = clean_filename
+        # Add Correct Prefix
+        display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
         # Safe Link
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
@@ -273,21 +284,23 @@ async def channel_receive_handler(bot, broadcast):
         # --- NAME LOGIC (Channel) ---
         full_caption_text = log_msg.caption if log_msg.caption else get_name(log_msg)
         
-        # Clean
+        # Clean Name
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
+        
+        # 🔥 SMART CLEANER: Remove existing prefix first
+        clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
+        
+        # Clean Underscores
         clean_filename = clean_filename.replace('_', ' ')
 
-        # பெயர் மாற்றம் இல்லை
-        display_filename = clean_filename
+        # Add Correct Prefix
+        display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
         safe_name_for_link = re.sub(r'\s+', '_', display_filename)
 
         # ShrinkMe
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
-        
-        # 🔥 முக்கியம்: சேனலில் போஸ்ட் செய்யும்போது Text-க்கு பதில் File Copy அனுப்புகிறோம்
-        # பழைய Text Message லாஜிக்கை தூக்கிவிட்டேன்
         
         await log_msg.copy(
             chat_id=broadcast.chat.id,
