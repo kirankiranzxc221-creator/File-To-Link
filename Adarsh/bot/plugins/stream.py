@@ -75,25 +75,26 @@ async def start(b, m):
             # --- START COMMAND LOGIC ---
             full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
             
-            # 1. Remove Extension
+            # 1. Clean Name (Caption க்காக)
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
-            
-            # 2. 🔥 SMART CLEANER: Remove ANY existing TRM tag from the start
-            # இது பழைய @TRM Team, TRM_Team போன்ற எதை இருந்தாலும் முதலில் நீக்கிவிடும்
             clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
-            
-            # 3. Clean the Movie Name (Replace _ with Space)
             clean_filename = clean_filename.replace('_', ' ')
 
-            # 4. Add the CORRECT Prefix
+            # Caption Name (அழகாக இருக்கும்)
             display_filename = f"@TRM_Team - {clean_filename.strip()}"
             
-            # 5. Create Safe Name for Link
-            safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+            # 2. 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
+            # இது எழுத்துக்கள் (a-z), நம்பர்கள் (0-9) மற்றும் Underscore (_) தவிர
+            # வேறு எந்த குப்பையையும் (', (, ), space) அனுமதிக்காது.
+            safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
+            # அடுத்தடுத்து வரும் Underscores-ஐ நீக்க (Example: Name___Movie -> Name_Movie)
+            safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
             
-            # 6. Links Generation
+            # 3. Links Generation
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
-            safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(get_msg)}"
+            
+            # ShrinkMe Link (இப்போது 100% பாதுகாப்பானது)
+            safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{safe_name_for_link}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
 
             caption_text = f"""
@@ -211,21 +212,18 @@ async def private_receive_handler(c: Client, m: Message):
         
         # Clean Name
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
-        
-        # 🔥 SMART CLEANER: Remove existing prefix first
         clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
-        
-        # Clean Underscores
         clean_filename = clean_filename.replace('_', ' ')
         
-        # Add Correct Prefix
+        # Caption Name
         display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
-        # Safe Link
-        safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+        # 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
+        safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
+        safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
 
         # ShrinkMe
-        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
         custom_caption = f"""
@@ -286,20 +284,18 @@ async def channel_receive_handler(bot, broadcast):
         
         # Clean Name
         clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
-        
-        # 🔥 SMART CLEANER: Remove existing prefix first
         clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
-        
-        # Clean Underscores
         clean_filename = clean_filename.replace('_', ' ')
 
-        # Add Correct Prefix
+        # Caption Name
         display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
-        safe_name_for_link = re.sub(r'\s+', '_', display_filename)
+        # 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
+        safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
+        safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
 
         # ShrinkMe
-        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{quote_plus(safe_name_for_link)}?hash={get_hash(log_msg)}"
+        safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
         
         await log_msg.copy(
