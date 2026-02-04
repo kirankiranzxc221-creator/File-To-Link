@@ -100,15 +100,16 @@ async def start(b, m):
             caption_text = f"""
 **{display_filename}**
 
-👀 Watch online & Download👇🏻
-{short_link}
+👀 Watch online & Download 📥
+
+☞ {short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
-Uploading By ~ @TRM_Team 
-╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+░ Uploading By ~ @TRM_Team ░
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
 """
             await get_msg.copy(chat_id=m.chat.id, caption=caption_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]]))
         except Exception as e:
