@@ -1,4 +1,4 @@
-#(c) AdarshGoel
+#(c) Adarsh-Goel
 import os
 import asyncio
 import re
@@ -75,28 +75,26 @@ async def start(b, m):
             # --- START COMMAND LOGIC ---
             full_caption_text = get_msg.caption if get_msg.caption else get_name(get_msg)
             
-            # 1. Clean Name (Caption க்காக)
+            # 1. Clean Name
             clean_filename = re.sub(r'\.(mkv|mp4|avi|webm|m4v)$', '', full_caption_text, flags=re.IGNORECASE)
             clean_filename = re.sub(r'^@?TRM[_ ]?Team\s*[-_]?\s*', '', clean_filename, flags=re.IGNORECASE)
             clean_filename = clean_filename.replace('_', ' ')
 
-            # Caption Name (அழகாக இருக்கும்)
+            # Caption Name
             display_filename = f"@TRM_Team - {clean_filename.strip()}"
             
-            # 2. 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
-            # இது எழுத்துக்கள் (a-z), நம்பர்கள் (0-9) மற்றும் Underscore (_) தவிர
-            # வேறு எந்த குப்பையையும் (', (, ), space) அனுமதிக்காது.
+            # 2. 🔥 SUPER SAFE LINK NAME 🔥
             safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
-            # அடுத்தடுத்து வரும் Underscores-ஐ நீக்க (Example: Name___Movie -> Name_Movie)
             safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
             
             # 3. Links Generation
             stream_link = f"{MY_URL}watch/{str(get_msg.id)}/{quote_plus(get_name(get_msg))}?hash={get_hash(get_msg)}"
             
-            # ShrinkMe Link (இப்போது 100% பாதுகாப்பானது)
+            # ShrinkMe Link
             safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{safe_name_for_link}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
 
+            # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
             caption_text = f"""
 **{display_filename}**
 
@@ -219,7 +217,7 @@ async def private_receive_handler(c: Client, m: Message):
         # Caption Name
         display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
-        # 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
+        # 🔥 SUPER SAFE LINK NAME 🔥
         safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
         safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
 
@@ -227,18 +225,20 @@ async def private_receive_handler(c: Client, m: Message):
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
+        # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
         custom_caption = f"""
 **{display_filename}**
 
-👀 Watch online & Download👇🏻
-{short_link}
+👀 Watch online & Download 📥
+
+☞ {short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
-Uploading By ~ @TRM_Team 
-╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+░ Uploading By ~ @TRM_Team ░
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
 """
         
         await log_msg.copy(
@@ -291,7 +291,7 @@ async def channel_receive_handler(bot, broadcast):
         # Caption Name
         display_filename = f"@TRM_Team - {clean_filename.strip()}"
         
-        # 🔥 SUPER SAFE LINK NAME (லிங்க்கிற்காக) 🔥
+        # 🔥 SUPER SAFE LINK NAME 🔥
         safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
         safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
 
@@ -299,20 +299,22 @@ async def channel_receive_handler(bot, broadcast):
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
         
+        # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
         await log_msg.copy(
             chat_id=broadcast.chat.id,
             caption=f"""
 **{display_filename}**
 
-👀 Watch online & Download👇🏻
-{short_link}
+👀 Watch online & Download 📥
+
+☞ {short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs════╗
-Uploading By ~ @TRM_Team 
-╚═══ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═════╝
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+░ Uploading By ~ @TRM_Team ░
+░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
 """,
             reply_markup=InlineKeyboardMarkup(
                 [
