@@ -1,4 +1,4 @@
-#(c) Adarsh-Goel
+#(c) AdarshGoel
 import os
 import asyncio
 import re
