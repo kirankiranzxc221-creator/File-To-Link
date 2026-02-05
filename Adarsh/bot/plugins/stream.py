@@ -94,20 +94,19 @@ async def start(b, m):
             safe_url_for_shortener = f"{MY_URL}watch/{str(get_msg.id)}/{safe_name_for_link}?hash={get_hash(get_msg)}"
             short_link = get_short_link(safe_url_for_shortener)
 
-            # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
+            # 🔥 EXACT USER DESIGN 🔥
             caption_text = f"""
 **{display_filename}**
 
-👀 Watch online & Download 📥
-
-☞ {short_link}
+👀 Watch online & Download👇🏻
+{short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
-░ Uploading By ~ @TRM_Team ░
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+Uploading By~ @TRM_Team 
+╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
 """
             await get_msg.copy(chat_id=m.chat.id, caption=caption_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]]))
         except Exception as e:
@@ -225,20 +224,19 @@ async def private_receive_handler(c: Client, m: Message):
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
 
-        # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
+        # 🔥 EXACT USER DESIGN 🔥
         custom_caption = f"""
 **{display_filename}**
 
-👀 Watch online & Download 📥
-
-☞ {short_link}
+👀 Watch online & Download👇🏻
+{short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
-░ Uploading By ~ @TRM_Team ░
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+Uploading By~ @TRM_Team 
+╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
 """
         
         await log_msg.copy(
@@ -299,22 +297,21 @@ async def channel_receive_handler(bot, broadcast):
         safe_url_for_shortener = f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}?hash={get_hash(log_msg)}"
         short_link = get_short_link(safe_url_for_shortener)
         
-        # 🔥 NEW CAPTION STYLE (Updated Here Too) 🔥
+        # 🔥 EXACT USER DESIGN 🔥
         await log_msg.copy(
             chat_id=broadcast.chat.id,
             caption=f"""
 **{display_filename}**
 
-👀 Watch online & Download 📥
-
-☞ {short_link}
+👀 Watch online & Download👇🏻
+{short_link}
 
 𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
-░ Uploading By ~ @TRM_Team ░
-░░░░░░░ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ░░░░░
+╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+Uploading By~ @TRM_Team 
+╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
 """,
             reply_markup=InlineKeyboardMarkup(
                 [
