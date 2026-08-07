@@ -17,7 +17,7 @@ db = Database(Var.DATABASE_URL, Var.name)
 
 # --- FINAL SETTINGS ---
 BIN_CHANNEL_ID = -1003649271176
-MY_URL = "https://filetolink-fvqn87a3.b4a.run/"
+MY_URL = "https://filetolink-umd6hbh3.b4a.run"
 # ----------------------
 
 MY_PASS = os.environ.get("MY_PASS",None)
