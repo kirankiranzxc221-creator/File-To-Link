@@ -18,7 +18,7 @@ db = Database(Var.DATABASE_URL, Var.name)
 
 # --- SETTINGS ---
 BIN_CHANNEL_ID = -1003649271176
-MY_URL = "https://filetolink-fvqn87a3.b4a.run/"
+MY_URL = "https://filetolink-umd6hbh3.b4a.run"
 SHRINKME_API_KEY = "C9d148b22dd2205f2a76fa26ade14f5c9c21c04d"
 # ----------------
 
