@@ -30,7 +30,7 @@ class Var(object):
     # --- HARDCODED URL FIX (முக்கிய மாற்றம்) ---
     # பழைய தவறான லாஜிக்கை நீக்கிவிட்டு, சரியான லிங்க்கை இங்கே கொடுத்துள்ளேன்.
     # FQDN-ஐ நேரடியாக எழுதாமல், Environment Variable-ல் இருந்து எடுக்குமாறு செய்கிறோம்
-    FQDN = str(getenv('FQDN', 'filetolink-w9kbdwl.b4a.run'))
+    FQDN = str(getenv('FQDN', 'https://v.trmteam1.workers.dev/'))
     URL = "https://{}/".format(FQDN)
     # ---------------------------------
 
