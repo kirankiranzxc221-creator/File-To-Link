@@ -231,8 +231,8 @@ async def private_receive_handler(c: Client, m: Message):
 👀 Watch online & Download👇🏻
 {short_link}
 
-𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
- ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
 ╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
 Uploading By~ @TRM_Team 
@@ -306,8 +306,8 @@ async def channel_receive_handler(bot, broadcast):
 👀 Watch online & Download👇🏻
 {short_link}
 
-𓆩♡𓆪 ㅤ ❍ㅤ      ⎙ㅤ     ⌲ 
- ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
 ╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
 Uploading By~ @TRM_Team 
