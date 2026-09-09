@@ -2,84 +2,180 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta property="og:image" content="https://i.postimg.cc/k4qq2Kb7/opus.png" itemprop="thumbnailUrl">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title>
-    <link rel="stylesheet" type='text/css' href="https://drive----google.com/uc?export=view&id=1pVLG4gZy7jdow3sO-wFS06aP_A9QX0O6">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Delius">
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.9/plyr.css" />
-    
-        									 
-<style>
-      marquee{
-      font-size: 30px;
-      font-weight: 800;
-      color: Black;
-      font-family: serif;
-      }
-    </style>
+    <title>%s</title> <!-- 1st %s: Page Title -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
     <style>
-      marquee{
-      font-size: 30px;
-      font-weight: 800;
-      color: Black;
-      font-family: serif;
-      }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background-color: #060912;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        .header-box {
+            width: 100%;
+            aspect-ratio: 3.4 / 1;
+            background-image: url('https://i.postimg.cc/GhvfCV6V/53426.png'); /* இங்கே Background லிங்க் போடுங்க */
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+        }
+
+        .movie-title {
+            width: 90%;
+            text-align: center;
+            color: #00ffff;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 15px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-placeholder {
+            width: 90%;
+            max-width: 400px;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            margin: 0 auto;
+            background: #000;
+        }
+        
+        /* Plyr வீடியோ முழுமையாக நிரம்ப */
+        .plyr { width: 100%; height: 100%; }
+
+        .choose-option {
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            margin-top: 4%;
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+        .choose-option .line1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            background: linear-gradient(90deg, #ffffff, #cfd8ff, #ffffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 12px rgba(0, 200, 255, 0.35);
+        }
+        .choose-option .line1::before,
+        .choose-option .line1::after {
+            content: "";
+            flex: 1;
+            height: 2px;
+            max-width: 30px;
+            background: linear-gradient(90deg, transparent, #00e5ff);
+            box-shadow: 0 0 6px #00e5ff;
+        }
+        .choose-option .line1::after { background: linear-gradient(90deg, #00e5ff, transparent); }
+        .choose-option .line2 {
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            font-style: italic;
+            font-weight: 700;
+            color: #c9971f;
+            margin-top: 6px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            width: 90%;
+            max-width: 380px;
+            margin: 4% auto 5% auto;
+        }
+
+        .btn-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            margin-bottom: 4vw;
+            transition: transform 0.2s;
+        }
+        .btn-img:active { transform: scale(0.95); }
+        .btn-img:last-child { margin-bottom: 0; }
+
+        .footer-box {
+            width: 100%;
+            aspect-ratio: 3.2 / 1;
+            background-image: url('https://i.postimg.cc/GhvfCV6V/53426.png'); /* இங்கே Background லிங்க் போடுங்க */
+            background-size: cover;
+            background-position: center bottom;
+            background-repeat: no-repeat;
+            margin-top: auto;
+        }
     </style>
 </head>
-
 <body>
-	
-    <header>
-        <marquee bgcolor="#808080"
-<div class="toogle"></div>
-        <div id="file-name">
-            %s
-        </div>
-</marquee>
-    </header>
 
-    <div class="container">
-        <tag src="%s" class="player"></tag>
+    <div class="header-box"></div>
+    
+    <!-- 2nd %s: Movie Name Display -->
+    <div class="movie-title">
+        <marquee direction="left">%s</marquee>
     </div>
 
-    <footer>
-	    <center><h4>Video not playing ? possibly because your browser or the player doesn't support codec please download and watch :D</h4></center><p>
-	    <center><h2><a href="https://youtube.com/OpusTechz">
-  <img src="https://i.postimg.cc/k4qq2Kb7/opus.png" alt="OpusLogo" width="150" height="75"></center>
-</a></center>
-	    	    
+    <!-- 3rd %s: Video URL Player -->
+    <div class="player-placeholder">
+        <video id="main-video" class="player" playsinline controls>
+            <source src="%s" type="video/mp4" />
+        </video>
+    </div>
 
+    <div class="choose-option">
+        <div class="line1">🎬 Choose your option</div>
+        <div class="line2">Download or play in your favorite player</div>
+    </div>
 
-    </footer>
-    <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
-	<script>
-        const controls = [
-              'play-large',
-              'rewind',
-              'play', 
-              'fast-forward', 
-              'progress', 
-              'current-time',
-              'duration',
-              'mute',
-              'volume',
-              'captions',
-              'settings',
-              'pip',
-              'airplay',
-              'download',
-              'fullscreen'
-            ];
+    <div class="buttons-container">
+        <a id="link-dl" href="#"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
+        <a id="link-vlc" href="#"><img src="https://i.postimg.cc/YjcqmZxb/jpeg-optimizer-53432.png" class="btn-img" alt="PLAY IN VLC"></a>
+        <a id="link-playit" href="#"><img src="https://i.postimg.cc/zD9wMJ5H/Picsart-26-09-09-12-21-44-295.png" class="btn-img" alt="PLAY IN PLAYit"></a>
+    </div>
+
+    <div class="footer-box"></div>
+
+    <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
+    <script>
+        // 1. பிளேயரை ஆக்டிவேட் செய்வது
         document.addEventListener('DOMContentLoaded', () => {
-            const player = Plyr.setup('.player', { controls });
-        });
+            const player = new Plyr('.player', {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+            });
 
-        const body = document.querySelector('body');
-        const footer = document.querySelector('footer');
-        const toogle = document.querySelector('.toogle');
+            // 2. வீடியோ லிங்க்கை எடுத்து பட்டன்களுக்குக் கொடுப்பது (Python %s எரரைத் தவிர்க்கும் ரகசிய வழி)
+            const videoElement = document.getElementById('main-video');
+            const videoSrc = videoElement.querySelector('source').src;
+
+            // டவுன்லோட் லிங்க்
+            document.getElementById('link-dl').href = videoSrc;
+
+            // VLC Player Intent லிங்க்
+            const vlcUrl = videoSrc.replace(/^https?:\/\//, '');
+            document.getElementById('link-vlc').href = "intent://" + vlcUrl + "#Intent;package=org.videolan.vlc;type=video/*;scheme=https;end";
+
+            // PLAYit Player Intent லிங்க்
+            document.getElementById('link-playit').href = "playit://play/?url=" + encodeURIComponent(videoSrc);
+        });
     </script>
 </body>
 </html>
