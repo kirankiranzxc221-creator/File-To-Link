@@ -132,8 +132,9 @@
         <marquee direction="left">%s</marquee>
     </div>
 
+    <!-- controlsList="nodownload" மூலம் பிளேயரின் உள்ளிருக்கும் டவுன்லோட் ஐகான் நீக்கப்பட்டுள்ளது -->
     <div class="player-placeholder">
-        <video id="main-video" class="player" playsinline controls>
+        <video id="main-video" class="player" playsinline controls controlsList="nodownload">
             <source src="%s" type="video/mp4" />
         </video>
     </div>
@@ -143,8 +144,9 @@
         <div class="line2">Download or play in your favorite player</div>
     </div>
 
+    <!-- பட்டனில் download அட்ரிபியூட் சேர்க்கப்பட்டு விட்டது -->
     <div class="buttons-container">
-        <a id="link-dl" href="#"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
+        <a id="link-dl" href="#" download target="_self"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
         <a id="link-vlc" href="#"><img src="https://i.postimg.cc/YjcqmZxb/jpeg-optimizer-53432.png" class="btn-img" alt="PLAY IN VLC"></a>
         <a id="link-playit" href="#"><img src="https://i.postimg.cc/zD9wMJ5H/Picsart-26-09-09-12-21-44-295.png" class="btn-img" alt="PLAY IN PLAYit"></a>
     </div>
@@ -161,11 +163,17 @@
             const videoElement = document.getElementById('main-video');
             const videoSrc = videoElement.querySelector('source').src;
 
-            document.getElementById('link-dl').href = videoSrc;
+            // டவுன்லோட் பட்டன் - புது பக்கத்திற்கு போகாமல் நேரடியாக டவுன்லோட் செய்யும்
+            const dlBtn = document.getElementById('link-dl');
+            dlBtn.href = videoSrc;
+            dlBtn.setAttribute("download", "");
+            dlBtn.setAttribute("target", "_self");
 
+            // VLC Player Intent
             const vlcUrl = videoSrc.replace(/^https?:\/\//, '');
             document.getElementById('link-vlc').href = "intent://" + vlcUrl + "#Intent;package=org.videolan.vlc;type=video/*;scheme=https;end";
 
+            // PLAYit Player Intent
             document.getElementById('link-playit').href = "playit://play/?url=" + encodeURIComponent(videoSrc);
         });
     </script>
