@@ -50,6 +50,11 @@
         
         .plyr { width: 100%%; height: 100%%; }
 
+        /* பழைய பிளேயரின் உள்ளே இருக்கும் டவுன்லோட் ஐகானை மட்டும் கண்களுக்குத் தெரியாமல் மறைக்கிறோம் */
+        [data-plyr="download"] {
+            display: none !important;
+        }
+
         .choose-option {
             width: 90%%;
             max-width: 380px;
@@ -108,6 +113,7 @@
             display: block;
             border-radius: 8px;
             margin-bottom: 4vw;
+            cursor: pointer;
             transition: transform 0.2s;
         }
         .btn-img:active { transform: scale(0.95); }
@@ -132,9 +138,9 @@
         <marquee direction="left">%s</marquee>
     </div>
 
-    <!-- controlsList="nodownload" மூலம் பிளேயரின் உள்ளிருக்கும் டவுன்லோட் ஐகான் நீக்கப்பட்டுள்ளது -->
+    <!-- பழைய கோடிங் மாதிரியே controls செட் செய்யப்பட்டுள்ளது, ஆனால் ஐகான் css மூலம் மறைக்கப்பட்டுள்ளது -->
     <div class="player-placeholder">
-        <video id="main-video" class="player" playsinline controls controlsList="nodownload">
+        <video id="main-video" class="player" playsinline controls>
             <source src="%s" type="video/mp4" />
         </video>
     </div>
@@ -144,9 +150,9 @@
         <div class="line2">Download or play in your favorite player</div>
     </div>
 
-    <!-- பட்டனில் download அட்ரிபியூட் சேர்க்கப்பட்டு விட்டது -->
     <div class="buttons-container">
-        <a id="link-dl" href="#" download target="_self"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
+        <!-- href லிங்க் இல்லாமல் கிளிக் செய்தால் வேலை செய்யும் படி மாற்றப்பட்டுள்ளது -->
+        <a id="link-dl"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
         <a id="link-vlc" href="#"><img src="https://i.postimg.cc/YjcqmZxb/jpeg-optimizer-53432.png" class="btn-img" alt="PLAY IN VLC"></a>
         <a id="link-playit" href="#"><img src="https://i.postimg.cc/zD9wMJ5H/Picsart-26-09-09-12-21-44-295.png" class="btn-img" alt="PLAY IN PLAYit"></a>
     </div>
@@ -156,24 +162,26 @@
     <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // பழைய கோடில் இருந்த அதே 'download' ஆப்ஷனை உள்ளே சேர்த்துள்ளோம்
             const player = new Plyr('.player', {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'download']
             });
 
             const videoElement = document.getElementById('main-video');
             const videoSrc = videoElement.querySelector('source').src;
 
-            // டவுன்லோட் பட்டன் - புது பக்கத்திற்கு போகாமல் நேரடியாக டவுன்லோட் செய்யும்
-            const dlBtn = document.getElementById('link-dl');
-            dlBtn.href = videoSrc;
-            dlBtn.setAttribute("download", "");
-            dlBtn.setAttribute("target", "_self");
+            // உங்கள் பச்சை நிற பட்டனை அழுத்தும் போது, பழைய பிளேயரின் மறைக்கப்பட்ட டவுன்லோட் பட்டனை கிளிக் செய்ய வைக்கிறோம்!
+            document.getElementById('link-dl').addEventListener('click', function(e) {
+                e.preventDefault();
+                const oldNativeDownloadBtn = document.querySelector('[data-plyr="download"]');
+                if(oldNativeDownloadBtn) {
+                    oldNativeDownloadBtn.click();
+                }
+            });
 
-            // VLC Player Intent
             const vlcUrl = videoSrc.replace(/^https?:\/\//, '');
             document.getElementById('link-vlc').href = "intent://" + vlcUrl + "#Intent;package=org.videolan.vlc;type=video/*;scheme=https;end";
 
-            // PLAYit Player Intent
             document.getElementById('link-playit').href = "playit://play/?url=" + encodeURIComponent(videoSrc);
         });
     </script>
