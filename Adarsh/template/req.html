@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title> <!-- 1st %s: Page Title -->
+    <title>%s</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
     <style>
         * { box-sizing: border-box; }
@@ -17,16 +17,16 @@
         }
 
         .header-box {
-            width: 100%;
+            width: 100%%;
             aspect-ratio: 3.4 / 1;
-            background-image: url('https://i.postimg.cc/GhvfCV6V/53426.png'); /* இங்கே Background லிங்க் போடுங்க */
+            background-image: url('YOUR_BACKGROUND_IMAGE_LINK');
             background-size: cover;
             background-position: center top;
             background-repeat: no-repeat;
         }
 
         .movie-title {
-            width: 90%;
+            width: 90%%;
             text-align: center;
             color: #00ffff;
             font-size: 16px;
@@ -38,7 +38,7 @@
         }
 
         .player-placeholder {
-            width: 90%;
+            width: 90%%;
             max-width: 400px;
             aspect-ratio: 16 / 9;
             border-radius: 10px;
@@ -48,14 +48,13 @@
             background: #000;
         }
         
-        /* Plyr வீடியோ முழுமையாக நிரம்ப */
-        .plyr { width: 100%; height: 100%; }
+        .plyr { width: 100%%; height: 100%%; }
 
         .choose-option {
-            width: 90%;
+            width: 90%%;
             max-width: 380px;
             text-align: center;
-            margin-top: 4%;
+            margin-top: 4%%;
             font-family: 'Georgia', 'Times New Roman', serif;
         }
         .choose-option .line1 {
@@ -98,13 +97,13 @@
         .buttons-container {
             display: flex;
             flex-direction: column;
-            width: 90%;
+            width: 90%%;
             max-width: 380px;
-            margin: 4% auto 5% auto;
+            margin: 4%% auto 5%% auto;
         }
 
         .btn-img {
-            width: 100%;
+            width: 100%%;
             height: auto;
             display: block;
             border-radius: 8px;
@@ -115,9 +114,9 @@
         .btn-img:last-child { margin-bottom: 0; }
 
         .footer-box {
-            width: 100%;
+            width: 100%%;
             aspect-ratio: 3.2 / 1;
-            background-image: url('https://i.postimg.cc/GhvfCV6V/53426.png'); /* இங்கே Background லிங்க் போடுங்க */
+            background-image: url('YOUR_BACKGROUND_IMAGE_LINK');
             background-size: cover;
             background-position: center bottom;
             background-repeat: no-repeat;
@@ -129,12 +128,10 @@
 
     <div class="header-box"></div>
     
-    <!-- 2nd %s: Movie Name Display -->
     <div class="movie-title">
         <marquee direction="left">%s</marquee>
     </div>
 
-    <!-- 3rd %s: Video URL Player -->
     <div class="player-placeholder">
         <video id="main-video" class="player" playsinline controls>
             <source src="%s" type="video/mp4" />
@@ -147,33 +144,28 @@
     </div>
 
     <div class="buttons-container">
-        <a id="link-dl" href="#"><img src="https://i.postimg.cc/QMM9sLYt/jpeg-optimizer-53434.png" class="btn-img" alt="Download Video"></a>
-        <a id="link-vlc" href="#"><img src="https://i.postimg.cc/YjcqmZxb/jpeg-optimizer-53432.png" class="btn-img" alt="PLAY IN VLC"></a>
-        <a id="link-playit" href="#"><img src="https://i.postimg.cc/zD9wMJ5H/Picsart-26-09-09-12-21-44-295.png" class="btn-img" alt="PLAY IN PLAYit"></a>
+        <a id="link-dl" href="#"><img src="YOUR_DOWNLOAD_BTN_LINK" class="btn-img" alt="Download Video"></a>
+        <a id="link-vlc" href="#"><img src="YOUR_VLC_BTN_LINK" class="btn-img" alt="PLAY IN VLC"></a>
+        <a id="link-playit" href="#"><img src="YOUR_PLAYIT_BTN_LINK" class="btn-img" alt="PLAY IN PLAYit"></a>
     </div>
 
     <div class="footer-box"></div>
 
     <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
     <script>
-        // 1. பிளேயரை ஆக்டிவேட் செய்வது
         document.addEventListener('DOMContentLoaded', () => {
             const player = new Plyr('.player', {
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
             });
 
-            // 2. வீடியோ லிங்க்கை எடுத்து பட்டன்களுக்குக் கொடுப்பது (Python %s எரரைத் தவிர்க்கும் ரகசிய வழி)
             const videoElement = document.getElementById('main-video');
             const videoSrc = videoElement.querySelector('source').src;
 
-            // டவுன்லோட் லிங்க்
             document.getElementById('link-dl').href = videoSrc;
 
-            // VLC Player Intent லிங்க்
             const vlcUrl = videoSrc.replace(/^https?:\/\//, '');
             document.getElementById('link-vlc').href = "intent://" + vlcUrl + "#Intent;package=org.videolan.vlc;type=video/*;scheme=https;end";
 
-            // PLAYit Player Intent லிங்க்
             document.getElementById('link-playit').href = "playit://play/?url=" + encodeURIComponent(videoSrc);
         });
     </script>
