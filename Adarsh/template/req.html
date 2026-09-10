@@ -47,7 +47,7 @@
             margin: 0 auto;
             background: #000;
         }
-        
+
         .plyr { width: 100%%; height: 100%%; }
 
         /* பழைய பிளேயரின் உள்ளே இருக்கும் டவுன்லோட் ஐகானை மட்டும் கண்களுக்குத் தெரியாமல் மறைக்கிறோம் */
@@ -133,7 +133,7 @@
 <body>
 
     <div class="header-box"></div>
-    
+
     <div class="movie-title">
         <marquee direction="left">%s</marquee>
     </div>
@@ -162,19 +162,55 @@
     <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // பழைய கோடில் இருந்த அதே 'download' ஆப்ஷனை உள்ளே சேர்த்துள்ளோம்
-            const player = new Plyr('.player', {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'download']
-            });
+
+            // ---------------------------------------------------------------
+            // fname fix: பக்கத்தின் URL-ல் இருந்து (?fname=Custom_Name.mkv)
+            // custom filename-ஐ படித்து, அதை video source URL-ஓடு இணைக்கிறோம்.
+            // இதனால் Plyr-ன் download பட்டன், VLC மற்றும் PLAYit லிங்குகள்
+            // எல்லாமே சரியான fname-ஓடு தான் வேலை செய்யும்.
+            // ---------------------------------------------------------------
+            const pageParams = new URLSearchParams(window.location.search);
+            const fname = pageParams.get('fname');
 
             const videoElement = document.getElementById('main-video');
-            const videoSrc = videoElement.querySelector('source').src;
+            const sourceElement = videoElement.querySelector('source');
+
+            // Original video URL, template-ல் இருந்து backend வழங்கியது
+            let videoSrc = sourceElement.getAttribute('src');
+
+            if (fname) {
+                try {
+                    const urlObj = new URL(videoSrc, window.location.href);
+                    // ஏற்கனவே fname இருந்தாலும் சரி, இல்லாவிட்டாலும் சரி -
+                    // பக்கத்தின் fname-ஐ வைத்து மேலெழுதுகிறோம் (single source of truth)
+                    urlObj.searchParams.set('fname', fname);
+                    videoSrc = urlObj.toString();
+                } catch (err) {
+                    // videoSrc relative/invalid ஆக இருந்தால் தோல்வியடையாமல்,
+                    // simple query-string append fallback
+                    const separator = videoSrc.includes('?') ? '&' : '?';
+                    videoSrc = videoSrc + separator + 'fname=' + encodeURIComponent(fname);
+                }
+
+                // Player-க்குள் இருக்கும் source-ஐயும் புதுப்பிக்கிறோம்,
+                // இதனால் Plyr அதன் native download பட்டனுக்கும் இதே URL-ஐ பயன்படுத்தும்
+                sourceElement.setAttribute('src', videoSrc);
+                videoElement.load();
+            }
+
+            // பழைய கோடில் இருந்த அதே 'download' ஆப்ஷனை உள்ளே சேர்த்துள்ளோம்
+            const player = new Plyr('.player', {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen', 'download'],
+                urls: {
+                    download: videoSrc
+                }
+            });
 
             // உங்கள் பச்சை நிற பட்டனை அழுத்தும் போது, பழைய பிளேயரின் மறைக்கப்பட்ட டவுன்லோட் பட்டனை கிளிக் செய்ய வைக்கிறோம்!
             document.getElementById('link-dl').addEventListener('click', function(e) {
                 e.preventDefault();
                 const oldNativeDownloadBtn = document.querySelector('[data-plyr="download"]');
-                if(oldNativeDownloadBtn) {
+                if (oldNativeDownloadBtn) {
                     oldNativeDownloadBtn.click();
                 }
             });
