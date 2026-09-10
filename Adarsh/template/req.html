@@ -182,7 +182,9 @@
             const vlcUrl = videoSrc.replace(/^https?:\/\//, '');
             document.getElementById('link-vlc').href = "intent://" + vlcUrl + "#Intent;package=org.videolan.vlc;type=video/*;scheme=https;end";
 
-            document.getElementById('link-playit').href = "playit://play/?url=" + encodeURIComponent(videoSrc);
+            const playitUrl = videoSrc.replace(/^https?:\/\//, '');
+            document.getElementById('link-playit').href = "intent://" + playitUrl + "#Intent;package=com.playit.videoplayer;type=video/*;scheme=https;end";
+
         });
     </script>
 </body>
