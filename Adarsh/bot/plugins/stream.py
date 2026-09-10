@@ -1,4 +1,4 @@
- #(c) Adarsh-Goel
+#(c) Adarsh-Goel
 import os
 import asyncio
 import re
@@ -11,7 +11,13 @@ from Adarsh.vars import Var
 from urllib.parse import quote_plus
 from pyrogram import filters, Client
 from pyrogram.errors import FloodWait, UserNotParticipant, PeerIdInvalid, ChannelInvalid
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import (
+    Message,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+)
 
 from Adarsh.utils.file_properties import get_name, get_hash, get_media_file_size
 db = Database(Var.DATABASE_URL, Var.name)
@@ -25,6 +31,19 @@ SHRINKME_API_KEY = "C9d148b22dd2205f2a76fa26ade14f5c9c21c04d"
 MY_PASS = os.environ.get("MY_PASS",None)
 pass_dict = {}
 pass_db = Database(Var.DATABASE_URL, "ag_passwords")
+
+# --- NEW: simple in-memory state tracker for the /rename FSM ---
+# Key: user_id, Value: True while that user is mid-rename-flow.
+# Used to stop the normal private_receive_handler from intercepting
+# the file/name messages that c.listen() is waiting on.
+RENAME_STATE = {}
+
+# --- NEW: persistent reply keyboard with the Rename button ---
+PERSISTENT_KEYBOARD = ReplyKeyboardMarkup(
+    [[KeyboardButton("📝 Rename File")]],
+    resize_keyboard=True
+)
+# -----------------------------------
 
 # --- ShrinkMe Shortener Function ---
 def get_short_link(long_url):
@@ -98,6 +117,17 @@ async def start(b, m):
             BIN_CHANNEL_ID,
             f"#NEW_USER: \n\nNew User [{m.from_user.first_name}](tg://user?id={m.from_user.id}) Started !!"
         )
+
+    # --- NEW: send the persistent reply keyboard once, separately from the
+    # inline-button photo message below (Telegram only allows one reply_markup
+    # type per message, so the inline buttons and the persistent keyboard are
+    # sent as two distinct messages). This does not alter the existing photo,
+    # caption, or inline buttons in any way. ---
+    await m.reply_text(
+        "⌨️ Quick-access menu enabled below.",
+        reply_markup=PERSISTENT_KEYBOARD
+    )
+
     usr_cmd = m.text.split("_")[-1]
     if usr_cmd == "/start":
         await m.reply_photo(
@@ -220,6 +250,12 @@ async def login_handler(c: Client, m: Message):
 #         into the URL path AND passed as ?fname= so the worker can force
 #         a matching Content-Disposition on download.
 # Output caption/shortener/button layout is identical to the normal flow.
+#
+# RENAME_STATE[user_id] is set True for the duration of this flow so that
+# private_receive_handler (the normal file handler) skips this user's
+# messages while c.listen() is waiting for them — this fixes the
+# interception bug. A try/finally guarantees the state is always cleared,
+# even on timeout, cancel, or unexpected exception.
 # ============================================================
 @StreamBot.on_message((filters.regex("📝 Rename File") | filters.command("rename")) & filters.private, group=4)
 async def rename_start_handler(c: Client, m: Message):
@@ -236,83 +272,95 @@ async def rename_start_handler(c: Client, m: Message):
             await pass_db.delete_user(m.chat.id)
             return
 
-    # --- Step 1: ask for the file ---
+    # --- NEW: turn the state ON for this user ---
+    RENAME_STATE[m.from_user.id] = True
     try:
-        ask_file_msg = await m.reply_text(
-            "📝 **Rename & Get Link**\n\nSend me the file (document / video / audio) you want to upload.\n\n"
-            "(Use /cancel anytime to stop)"
-        )
-        file_msg = await c.listen(
-            m.chat.id,
-            filters=filters.document | filters.video | filters.audio | filters.text,
-            timeout=120
-        )
-    except TimeoutError:
-        await ask_file_msg.edit("⏰ Timed out waiting for the file. Try /rename again.")
-        return
+        # --- Step 1: ask for the file ---
+        try:
+            ask_file_msg = await m.reply_text(
+                "📝 **Rename & Get Link**\n\nSend me the file (document / video / audio) you want to upload.\n\n"
+                "(Use /cancel anytime to stop)"
+            )
+            file_msg = await c.listen(
+                m.chat.id,
+                filters=filters.document | filters.video | filters.audio | filters.text,
+                timeout=120
+            )
+        except TimeoutError:
+            await ask_file_msg.edit("⏰ Timed out waiting for the file. Try /rename again.")
+            return
 
-    if file_msg.text and file_msg.text.strip() == "/cancel":
-        await file_msg.reply_text("Process Cancelled Successfully")
-        return
+        if file_msg.text and file_msg.text.strip() == "/cancel":
+            await file_msg.reply_text("Process Cancelled Successfully")
+            return
 
-    if not (file_msg.document or file_msg.video or file_msg.audio):
-        await file_msg.reply_text("That wasn't a file. Please try /rename again and send a document/video/audio.")
-        return
+        if not (file_msg.document or file_msg.video or file_msg.audio):
+            await file_msg.reply_text("That wasn't a file. Please try /rename again and send a document/video/audio.")
+            return
 
-    # --- Step 2: ask for the new custom name ---
-    try:
-        ask_name_msg = await file_msg.reply_text(
-            "✏️ Now send me the **new file name** (with extension), e.g. `TRM_Petta_HD.mkv`\n\n"
-            "(Use /cancel anytime to stop)"
-        )
-        name_msg = await c.listen(m.chat.id, filters=filters.text, timeout=120)
-    except TimeoutError:
-        await ask_name_msg.edit("⏰ Timed out waiting for the new name. Try /rename again.")
-        return
+        # --- Step 2: ask for the new custom name ---
+        try:
+            ask_name_msg = await file_msg.reply_text(
+                "✏️ Now send me the **new file name** (with extension), e.g. `TRM_Petta_HD.mkv`\n\n"
+                "(Use /cancel anytime to stop)"
+            )
+            name_msg = await c.listen(m.chat.id, filters=filters.text, timeout=120)
+        except TimeoutError:
+            await ask_name_msg.edit("⏰ Timed out waiting for the new name. Try /rename again.")
+            return
 
-    if name_msg.text.strip() == "/cancel":
-        await name_msg.reply_text("Process Cancelled Successfully")
-        return
+        if name_msg.text.strip() == "/cancel":
+            await name_msg.reply_text("Process Cancelled Successfully")
+            return
 
-    # Sanitize the user-supplied name: keep it path-safe, no separators.
-    custom_name = name_msg.text.strip()
-    custom_name = re.sub(r'[\\/]+', '_', custom_name)
-    custom_name = custom_name[:200]  # sane length cap
+        # Sanitize the user-supplied name: keep it path-safe, no separators.
+        custom_name = name_msg.text.strip()
+        custom_name = re.sub(r'[\\/]+', '_', custom_name)
+        custom_name = custom_name[:200]  # sane length cap
 
-    if not custom_name:
-        await name_msg.reply_text("Empty name received. Please try /rename again.")
-        return
+        if not custom_name:
+            await name_msg.reply_text("Empty name received. Please try /rename again.")
+            return
 
-    # --- Step 3: forward + build links using the custom name ---
-    try:
-        log_msg = await file_msg.forward(chat_id=BIN_CHANNEL_ID)
+        # --- Step 3: forward + build links using the custom name ---
+        try:
+            log_msg = await file_msg.forward(chat_id=BIN_CHANNEL_ID)
 
-        stream_link, online_link, custom_caption = build_rename_links_and_caption(log_msg, custom_name)
+            stream_link, online_link, custom_caption = build_rename_links_and_caption(log_msg, custom_name)
 
-        await log_msg.copy(
-            chat_id=m.chat.id,
-            caption=custom_caption,
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
-                                                InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
-        )
+            await log_msg.copy(
+                chat_id=m.chat.id,
+                caption=custom_caption,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
+                                                    InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
+            )
 
-    except FloodWait as e:
-        print(f"Sleeping for {str(e.x)}s")
-        await asyncio.sleep(e.x)
-        await c.send_message(
-            chat_id=BIN_CHANNEL_ID,
-            text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s during /rename from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`",
-            disable_web_page_preview=True
-        )
-    except Exception as e:
-        print(f"Rename flow error: {e}")
-        await m.reply_text("Something went wrong while generating the renamed link. Maybe try /rename again.")
+        except FloodWait as e:
+            print(f"Sleeping for {str(e.x)}s")
+            await asyncio.sleep(e.x)
+            await c.send_message(
+                chat_id=BIN_CHANNEL_ID,
+                text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s during /rename from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`",
+                disable_web_page_preview=True
+            )
+        except Exception as e:
+            print(f"Rename flow error: {e}")
+            await m.reply_text("Something went wrong while generating the renamed link. Maybe try /rename again.")
+    finally:
+        # --- NEW: always clear the state, no matter how the flow ended ---
+        RENAME_STATE.pop(m.from_user.id, None)
 # ============================================================
 
 @StreamBot.on_message((filters.private) & (filters.document | filters.video | filters.audio | filters.photo) , group=4)
 async def private_receive_handler(c: Client, m: Message):
     if m.from_user.id not in Var.OWNER_ID:
         await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
+        return
+
+    # --- NEW: if this user is currently inside the /rename flow, skip —
+    # the file they just sent belongs to that flow's c.listen() call, not
+    # to the normal file-to-link handler. ---
+    if RENAME_STATE.get(m.from_user.id):
         return
 
     if MY_PASS:
