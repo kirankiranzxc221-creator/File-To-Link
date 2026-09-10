@@ -1,4 +1,4 @@
-#(c) Adarsh-Goel
+ #(c) Adarsh-Goel
 import os
 import asyncio
 import re
@@ -43,6 +43,49 @@ def get_short_link(long_url):
         return long_url
 # -----------------------------------
 
+# --- NEW: helper to build the custom-name links + caption for the rename flow ---
+# Mirrors the existing link/caption logic exactly, but sources the display name
+# from a user-supplied custom name instead of the original Telegram file name,
+# and appends &fname=<custom> so the worker can force a matching download name.
+def build_rename_links_and_caption(log_msg, custom_name):
+    custom_name_quoted = quote_plus(custom_name)
+
+    stream_link = (
+        f"{MY_URL}watch/{str(log_msg.id)}/{custom_name_quoted}"
+        f"?hash={get_hash(log_msg)}&fname={custom_name_quoted}"
+    )
+    online_link = (
+        f"{MY_URL}{str(log_msg.id)}/{custom_name_quoted}"
+        f"?hash={get_hash(log_msg)}&fname={custom_name_quoted}"
+    )
+
+    display_filename = f"@TRM_Team - {custom_name}"
+
+    safe_name_for_link = re.sub(r'[^\w-]', '_', display_filename)
+    safe_name_for_link = re.sub(r'_+', '_', safe_name_for_link)
+
+    safe_url_for_shortener = (
+        f"{MY_URL}watch/{str(log_msg.id)}/{safe_name_for_link}"
+        f"?hash={get_hash(log_msg)}&fname={custom_name_quoted}"
+    )
+    short_link = get_short_link(safe_url_for_shortener)
+
+    caption_text = f"""
+**{display_filename}**
+
+👀 Watch online & Download👇🏻
+{short_link}
+
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+
+╔════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╗
+Uploading By~ @TRM_Team 
+╚════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╝
+"""
+    return stream_link, online_link, caption_text
+# -----------------------------------
+
 @StreamBot.on_message(filters.command('start') & filters.private)
 async def start(b, m):
     if m.from_user.id not in Var.OWNER_ID:
@@ -59,7 +102,7 @@ async def start(b, m):
     if usr_cmd == "/start":
         await m.reply_photo(
             photo="https://telegra.ph/file/3cd15a67ad7234c2945e7.jpg",
-            caption="**ʜᴇʟʟᴏ...⚡\n\nɪᴀᴍ ᴀ sɪᴍᴘʟᴇ ᴛᴇʟᴇɢʀᴀᴍ ғɪʟᴇ/ᴠɪᴅᴇᴏ ᴛᴏ ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋ ᴀɴᴅ sᴛʀᴇᴀᴍ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ.**\n\n**ᴜsᴇ /help ғᴏʀ ᴍᴏʀᴇ ᴅᴇᴛsɪʟs\n\nsᴇɴᴅ ᴍᴇ ᴀɴʏ ᴠɪᴅᴇᴏ / ғɪʟᴇ ᴛᴏ sᴇᴇ ᴍʏ ᴘᴏᴡᴇʀᴢ...**",
+            caption="**ʜᴇʟʟᴏ...⚡\n\nɪᴀᴍ ᴀ sɪᴍᴘʟᴇ ᴛᴇʟᴇɢʀᴀᴍ ғɪʟᴇ/ᴠɪᴅᴇᴏ ᴛᴏ ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋ ᴀɴᴅ sᴛʀᴇᴀᴍ ʟɪɴᴋ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ.**\n\n**ᴜsᴇ /help ғᴏʀ ᴍᴏʀᴇ ᴅᴇᴛsɪʟs\n\nsᴇɴᴅ ᴍᴇ ᴀɴʏ ᴠɪᴅᴇᴏ / ғɪʟᴇ ᴛᴏ sᴇᴇ ᴍʏ ᴘᴏᴡᴇʀᴢ...\n\nᴜsᴇ /rename ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴀ ғɪʟᴇ ᴡɪᴛʜ ᴀ ᴄᴜsᴛᴏᴍ ɴᴀᴍᴇ...**",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [InlineKeyboardButton("⚡ ᴜᴘᴅᴀᴛᴇᴢ ⚡", url="https://t.me/MWUpdatez"), InlineKeyboardButton("⚡ sᴜᴘᴘᴏʀᴛ ⚡", url="https://t.me/OpusTechz")],
@@ -101,12 +144,12 @@ async def start(b, m):
 👀 Watch online & Download👇🏻
 {short_link}
 
-𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
-  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+╔════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╗
 Uploading By~ @TRM_Team 
-╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
+╚════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╝
 """
             await get_msg.copy(chat_id=m.chat.id, caption=caption_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ⚡", url=stream_link)]]))
         except Exception as e:
@@ -132,7 +175,7 @@ async def help_handler(bot, message):
         await db.add_user(message.from_user.id)
     await message.reply_photo(
         photo="https://telegra.ph/file/3cd15a67ad7234c2945e7.jpg",
-        caption="**Send me any file to get the link.**",
+        caption="**Send me any file to get the link.**\n\n**Use /rename to upload a file and give it a custom name.**",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton("⚡ sᴜᴘᴘᴏʀᴛ ⚡", url="https://t.me/OpusTechz")]]
         )
@@ -168,6 +211,103 @@ async def login_handler(c: Client, m: Message):
         await ag.edit(ag_text)
     except Exception as e:
         print(e)
+
+# ============================================================
+# NEW: /rename FSM flow
+# Step 1: ask for the file
+# Step 2: ask for the new custom name
+# Step 3: forward to bin channel, build links with the custom name baked
+#         into the URL path AND passed as ?fname= so the worker can force
+#         a matching Content-Disposition on download.
+# Output caption/shortener/button layout is identical to the normal flow.
+# ============================================================
+@StreamBot.on_message((filters.regex("📝 Rename File") | filters.command("rename")) & filters.private, group=4)
+async def rename_start_handler(c: Client, m: Message):
+    if m.from_user.id not in Var.OWNER_ID:
+        await m.reply_text("🚫 **Access Denied!**\n\nThis bot is private. Only the owner can use it.")
+        return
+
+    if MY_PASS:
+        check_pass = await pass_db.get_user_pass(m.chat.id)
+        if check_pass is None:
+            await m.reply_text("Login first using /login cmd \nDon't know the password contact @ArjunVR_AVR")
+            return
+        if check_pass != MY_PASS:
+            await pass_db.delete_user(m.chat.id)
+            return
+
+    # --- Step 1: ask for the file ---
+    try:
+        ask_file_msg = await m.reply_text(
+            "📝 **Rename & Get Link**\n\nSend me the file (document / video / audio) you want to upload.\n\n"
+            "(Use /cancel anytime to stop)"
+        )
+        file_msg = await c.listen(
+            m.chat.id,
+            filters=filters.document | filters.video | filters.audio | filters.text,
+            timeout=120
+        )
+    except TimeoutError:
+        await ask_file_msg.edit("⏰ Timed out waiting for the file. Try /rename again.")
+        return
+
+    if file_msg.text and file_msg.text.strip() == "/cancel":
+        await file_msg.reply_text("Process Cancelled Successfully")
+        return
+
+    if not (file_msg.document or file_msg.video or file_msg.audio):
+        await file_msg.reply_text("That wasn't a file. Please try /rename again and send a document/video/audio.")
+        return
+
+    # --- Step 2: ask for the new custom name ---
+    try:
+        ask_name_msg = await file_msg.reply_text(
+            "✏️ Now send me the **new file name** (with extension), e.g. `TRM_Petta_HD.mkv`\n\n"
+            "(Use /cancel anytime to stop)"
+        )
+        name_msg = await c.listen(m.chat.id, filters=filters.text, timeout=120)
+    except TimeoutError:
+        await ask_name_msg.edit("⏰ Timed out waiting for the new name. Try /rename again.")
+        return
+
+    if name_msg.text.strip() == "/cancel":
+        await name_msg.reply_text("Process Cancelled Successfully")
+        return
+
+    # Sanitize the user-supplied name: keep it path-safe, no separators.
+    custom_name = name_msg.text.strip()
+    custom_name = re.sub(r'[\\/]+', '_', custom_name)
+    custom_name = custom_name[:200]  # sane length cap
+
+    if not custom_name:
+        await name_msg.reply_text("Empty name received. Please try /rename again.")
+        return
+
+    # --- Step 3: forward + build links using the custom name ---
+    try:
+        log_msg = await file_msg.forward(chat_id=BIN_CHANNEL_ID)
+
+        stream_link, online_link, custom_caption = build_rename_links_and_caption(log_msg, custom_name)
+
+        await log_msg.copy(
+            chat_id=m.chat.id,
+            caption=custom_caption,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⚡ ᴡᴀᴛᴄʜ ⚡", url=stream_link),
+                                                InlineKeyboardButton('⚡ ᴅᴏᴡɴʟᴏᴀᴅ ⚡', url=online_link)]])
+        )
+
+    except FloodWait as e:
+        print(f"Sleeping for {str(e.x)}s")
+        await asyncio.sleep(e.x)
+        await c.send_message(
+            chat_id=BIN_CHANNEL_ID,
+            text=f"Gᴏᴛ FʟᴏᴏᴅWᴀɪᴛ ᴏғ {str(e.x)}s during /rename from [{m.from_user.first_name}](tg://user?id={m.from_user.id})\n\n**𝚄𝚜𝚎𝚛 𝙸𝙳 :** `{str(m.from_user.id)}`",
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        print(f"Rename flow error: {e}")
+        await m.reply_text("Something went wrong while generating the renamed link. Maybe try /rename again.")
+# ============================================================
 
 @StreamBot.on_message((filters.private) & (filters.document | filters.video | filters.audio | filters.photo) , group=4)
 async def private_receive_handler(c: Client, m: Message):
@@ -231,12 +371,12 @@ async def private_receive_handler(c: Client, m: Message):
 👀 Watch online & Download👇🏻
 {short_link}
 
-𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
-  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+╔════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╗
 Uploading By~ @TRM_Team 
-╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
+╚════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╝
 """
         
         await log_msg.copy(
@@ -306,12 +446,12 @@ async def channel_receive_handler(bot, broadcast):
 👀 Watch online & Download👇🏻
 {short_link}
 
-𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
-  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
+𓆩❤️‍🔥𓆪 ​    💬        💾ㅤ     ⌲ 
+  ˡᶦᵏᵉ   ᶜᵒᵐᵐᵉⁿᵗ   ˢᵃᵛᵉ      ˢʰᵃʳᵉ
 
-╔════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╗
+╔════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╗
 Uploading By~ @TRM_Team 
-╚════ ᴊᴏɪɴ ᴡɪᴛʜ ᴜs ═══╝
+╚════ ᴊᴏɪɴ ᴡɪᴛʰ ᴜs ═══╝
 """,
             reply_markup=InlineKeyboardMarkup(
                 [
