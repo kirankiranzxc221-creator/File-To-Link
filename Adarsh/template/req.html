@@ -135,7 +135,7 @@
     <div class="header-box"></div>
 
     <div class="movie-title">
-        <marquee direction="left">%s</marquee>
+        <marquee id="movie-title-text" direction="left">%s</marquee>
     </div>
 
     <!-- பழைய கோடிங் மாதிரியே controls செட் செய்யப்பட்டுள்ளது, ஆனால் ஐகான் css மூலம் மறைக்கப்பட்டுள்ளது -->
@@ -171,6 +171,23 @@
             // ---------------------------------------------------------------
             const pageParams = new URLSearchParams(window.location.search);
             const fname = pageParams.get('fname');
+
+            // ---------------------------------------------------------------
+            // fname fix #2: <title>, movie-title மற்றும் marquee ஆகியவற்றையும்
+            // custom fname-ஐ வைத்தே காட்டுகிறோம் (extension-ஐ நீக்கிவிட்டு).
+            // ---------------------------------------------------------------
+            if (fname) {
+                // கடைசி "." க்கு பின் உள்ள extension-ஐ மட்டும் நீக்குகிறோம்
+                const lastDotIndex = fname.lastIndexOf('.');
+                const cleanTitle = lastDotIndex > 0 ? fname.substring(0, lastDotIndex) : fname;
+
+                document.title = cleanTitle;
+
+                const titleTextEl = document.getElementById('movie-title-text');
+                if (titleTextEl) {
+                    titleTextEl.textContent = cleanTitle;
+                }
+            }
 
             const videoElement = document.getElementById('main-video');
             const sourceElement = videoElement.querySelector('source');
